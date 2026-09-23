@@ -1,0 +1,263 @@
+/**
+ * City and airport reference data.
+ *
+ * In production this is generated from the OurAirports / GeoNames dumps (see
+ * scripts/). For the prototype it is hand-curated for the confirmed scope:
+ * China, Japan, Korea and Southeast Asia.
+ *
+ * Every city carries its own IANA timezone and currency because both are needed
+ * on every scoring path — dates must be resolved per city, not per browser.
+ */
+
+import type { City } from "../scoring/types";
+
+export const CITIES: City[] = [
+  {
+    id: "shanghai",
+    iataCity: "SHA",
+    airports: ["PVG", "SHA"],
+    country: "CN",
+    currency: "CNY",
+    timezone: "Asia/Shanghai",
+    lat: 31.2304,
+    lon: 121.4737,
+    name: { en: "Shanghai", zh: "上海" },
+  },
+  {
+    id: "beijing",
+    iataCity: "BJS",
+    airports: ["PEK", "PKX"],
+    country: "CN",
+    currency: "CNY",
+    timezone: "Asia/Shanghai",
+    lat: 39.9042,
+    lon: 116.4074,
+    name: { en: "Beijing", zh: "北京" },
+  },
+  {
+    id: "guangzhou",
+    iataCity: "CAN",
+    airports: ["CAN"],
+    country: "CN",
+    currency: "CNY",
+    timezone: "Asia/Shanghai",
+    lat: 23.1291,
+    lon: 113.2644,
+    name: { en: "Guangzhou", zh: "广州" },
+  },
+  {
+    id: "chengdu",
+    iataCity: "CTU",
+    airports: ["TFU", "CTU"],
+    country: "CN",
+    currency: "CNY",
+    timezone: "Asia/Shanghai",
+    lat: 30.5728,
+    lon: 104.0668,
+    name: { en: "Chengdu", zh: "成都" },
+  },
+  {
+    id: "hongkong",
+    iataCity: "HKG",
+    airports: ["HKG"],
+    country: "HK",
+    currency: "HKD",
+    timezone: "Asia/Hong_Kong",
+    lat: 22.3193,
+    lon: 114.1694,
+    name: { en: "Hong Kong", zh: "香港" },
+  },
+  {
+    id: "tokyo",
+    iataCity: "TYO",
+    airports: ["HND", "NRT"],
+    country: "JP",
+    currency: "JPY",
+    timezone: "Asia/Tokyo",
+    lat: 35.6762,
+    lon: 139.6503,
+    name: { en: "Tokyo", zh: "东京" },
+  },
+  {
+    id: "osaka",
+    iataCity: "OSA",
+    airports: ["KIX", "ITM"],
+    country: "JP",
+    currency: "JPY",
+    timezone: "Asia/Tokyo",
+    lat: 34.6937,
+    lon: 135.5023,
+    name: { en: "Osaka", zh: "大阪" },
+  },
+  {
+    id: "sapporo",
+    iataCity: "SPK",
+    airports: ["CTS"],
+    country: "JP",
+    currency: "JPY",
+    timezone: "Asia/Tokyo",
+    lat: 43.0618,
+    lon: 141.3545,
+    name: { en: "Sapporo", zh: "札幌" },
+  },
+  {
+    id: "seoul",
+    iataCity: "SEL",
+    airports: ["ICN", "GMP"],
+    country: "KR",
+    currency: "KRW",
+    timezone: "Asia/Seoul",
+    lat: 37.5665,
+    lon: 126.978,
+    name: { en: "Seoul", zh: "首尔" },
+  },
+  {
+    id: "busan",
+    iataCity: "PUS",
+    airports: ["PUS"],
+    country: "KR",
+    currency: "KRW",
+    timezone: "Asia/Seoul",
+    lat: 35.1796,
+    lon: 129.0756,
+    name: { en: "Busan", zh: "釜山" },
+  },
+  {
+    id: "bangkok",
+    iataCity: "BKK",
+    airports: ["BKK", "DMK"],
+    country: "TH",
+    currency: "THB",
+    timezone: "Asia/Bangkok",
+    lat: 13.7563,
+    lon: 100.5018,
+    name: { en: "Bangkok", zh: "曼谷" },
+  },
+  {
+    id: "phuket",
+    iataCity: "HKT",
+    airports: ["HKT"],
+    country: "TH",
+    currency: "THB",
+    timezone: "Asia/Bangkok",
+    lat: 7.8804,
+    lon: 98.3923,
+    name: { en: "Phuket", zh: "普吉岛" },
+  },
+  {
+    id: "chiangmai",
+    iataCity: "CNX",
+    airports: ["CNX"],
+    country: "TH",
+    currency: "THB",
+    timezone: "Asia/Bangkok",
+    lat: 18.7883,
+    lon: 98.9853,
+    name: { en: "Chiang Mai", zh: "清迈" },
+  },
+  {
+    id: "singapore",
+    iataCity: "SIN",
+    airports: ["SIN"],
+    country: "SG",
+    currency: "SGD",
+    timezone: "Asia/Singapore",
+    lat: 1.3521,
+    lon: 103.8198,
+    name: { en: "Singapore", zh: "新加坡" },
+  },
+  {
+    id: "kualalumpur",
+    iataCity: "KUL",
+    airports: ["KUL"],
+    country: "MY",
+    currency: "MYR",
+    timezone: "Asia/Kuala_Lumpur",
+    lat: 3.139,
+    lon: 101.6869,
+    name: { en: "Kuala Lumpur", zh: "吉隆坡" },
+  },
+  {
+    id: "bali",
+    iataCity: "DPS",
+    airports: ["DPS"],
+    country: "ID",
+    currency: "IDR",
+    timezone: "Asia/Makassar",
+    lat: -8.4095,
+    lon: 115.1889,
+    name: { en: "Bali (Denpasar)", zh: "巴厘岛" },
+  },
+  {
+    id: "jakarta",
+    iataCity: "JKT",
+    airports: ["CGK"],
+    country: "ID",
+    currency: "IDR",
+    timezone: "Asia/Jakarta",
+    lat: -6.2088,
+    lon: 106.8456,
+    name: { en: "Jakarta", zh: "雅加达" },
+  },
+  {
+    id: "hanoi",
+    iataCity: "HAN",
+    airports: ["HAN"],
+    country: "VN",
+    currency: "VND",
+    timezone: "Asia/Ho_Chi_Minh",
+    lat: 21.0278,
+    lon: 105.8342,
+    name: { en: "Hanoi", zh: "河内" },
+  },
+  {
+    id: "hochiminh",
+    iataCity: "SGN",
+    airports: ["SGN"],
+    country: "VN",
+    currency: "VND",
+    timezone: "Asia/Ho_Chi_Minh",
+    lat: 10.8231,
+    lon: 106.6297,
+    name: { en: "Ho Chi Minh City", zh: "胡志明市" },
+  },
+  {
+    id: "manila",
+    iataCity: "MNL",
+    airports: ["MNL"],
+    country: "PH",
+    currency: "PHP",
+    timezone: "Asia/Manila",
+    lat: 14.5995,
+    lon: 120.9842,
+    name: { en: "Manila", zh: "马尼拉" },
+  },
+  {
+    id: "taipei",
+    iataCity: "TPE",
+    airports: ["TPE", "TSA"],
+    country: "TW",
+    currency: "TWD",
+    timezone: "Asia/Taipei",
+    lat: 25.033,
+    lon: 121.5654,
+    name: { en: "Taipei", zh: "台北" },
+  },
+];
+
+export const CITY_BY_ID = new Map(CITIES.map((c) => [c.id, c]));
+
+/** Every IATA code we know about, mapped to the city that owns it. */
+export const AIRPORT_TO_CITY = new Map<string, City>(
+  CITIES.flatMap((c) => c.airports.map((a) => [a, c] as const)).concat(
+    CITIES.map((c) => [c.iataCity, c] as const),
+  ),
+);
+
+export function findCity(id: string): City | undefined {
+  return CITY_BY_ID.get(id);
+}
+
+export function cityDisplayName(city: City, locale: "en" | "zh"): string {
+  return city.name[locale];
+}

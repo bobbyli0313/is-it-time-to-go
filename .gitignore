@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# Next.js build output
+.next/
+out/
+build/
+next-env.d.ts
+
+# Local npm cache (created because the global ~/.npm cache had root-owned files)
+.npm-cache/
+
+# Test and build caches
+coverage/
+*.tsbuildinfo
+
+# Environment — never commit real keys; .env.example is the tracked template
+.env
+.env.*
+!.env.example
+
+# Editor and OS noise
+.DS_Store
+.idea/
+.vscode/
+*.swp
+npm-debug.log*
+yarn-error.log*
