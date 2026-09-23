@@ -1,0 +1,81 @@
+@import "tailwindcss";
+
+/**
+ * Tailwind v4 is configured CSS-first: tokens go in `@theme`, not a JS config.
+ */
+@theme {
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, "PingFang SC", "Hiragino Sans GB",
+    "Microsoft YaHei", sans-serif;
+  --color-ink-950: #070b14;
+  --color-ink-900: #0b1120;
+  --color-ink-850: #101a2e;
+  --color-ink-800: #16203a;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background:
+    radial-gradient(1100px 600px at 12% -8%, #1c2b52 0%, transparent 60%),
+    radial-gradient(900px 500px at 92% 4%, #123043 0%, transparent 55%),
+    var(--color-ink-950);
+  min-height: 100vh;
+}
+
+/* Respect users who have asked for less motion. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* Native date/number inputs need dark-theme affordances in WebKit. */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.75);
+  cursor: pointer;
+}
+
+/**
+ * Dimension cards: equal height within a row, a fixed maximum width so the wrap
+ * point is driven by available space rather than content length, and a column
+ * count selected by the number of cards.
+ *
+ * The column count MUST be chosen by a variant class rather than by a bare
+ * breakpoint rule. An earlier version set three-across from `min-width: 1024px`
+ * for every case, which overrode the two-across rule on desktop and turned the
+ * four-card layout into 3 + 1 instead of a 2x2 block.
+ *
+ * `align-items: stretch` (the flex default) makes cards in the same row match the
+ * tallest one, so the section stays symmetric even though the expandable "data
+ * details" panel is only open on one card. Grow is disabled so a short card never
+ * stretches past its siblings.
+ *
+ * The basis values subtract the container's own gaps (`gap-4` = 1rem below 640px,
+ * `sm:gap-5` = 1.25rem above). Forgetting that would overflow the row by one gap
+ * and wrap a card early.
+ */
+.dimension-grid > * {
+  flex: 0 1 100%;
+  min-width: 0;
+}
+
+/* 2, 3 or 4 cards: two across from 640px, and never more. */
+@media (min-width: 640px) {
+  .dimension-grid--two-up > *,
+  .dimension-grid--three-up > * {
+    flex-basis: calc((100% - 1.25rem) / 2);
+  }
+}
+
+/* 5 cards: three across from 1024px, laid out 3 + 2 with the short row centred. */
+@media (min-width: 1024px) {
+  .dimension-grid--three-up > * {
+    flex-basis: calc((100% - 2.5rem) / 3);
+  }
+}
