@@ -57,9 +57,12 @@ export const PARAMS = {
     baselineCny: 500,
     /**
      * Fitted so an index at exactly 2x baseline scores 70 — the one hotel data
-     * point PLANS.md provides ("Tokyo 1000/night -> 70"). The original spec gave
-     * no formula, so this anchor is what pins the curve down:
+     * point the original product brief provides ("Tokyo 1000/night -> 70"). The
+     * brief gave no formula, so this anchor is what pins the curve down:
      * 1x -> 100, 1.5x -> ~84, 2x -> 70, 3x -> ~49, 4x -> ~34.
+     *
+     * The brief is a private planning note and is not part of this repository;
+     * MODEL.md records the same calibration publicly.
      */
     decay: 0.356675,
     /**
@@ -75,12 +78,14 @@ export const PARAMS = {
     distanceRatioThreshold: 1,
     /**
      * Fitted so a fare at 2.93x the `miles x $0.10` anchor scores ~20, matching
-     * PLANS.md's worked example. Note the spec's own numbers are internally
-     * inconsistent here: the stated rule "miles x $0.10, the more expensive the
-     * lower the score" admits no decay coefficient that is also obviously
-     * "correct", so this is fitted to the example rather than derived. This is
-     * the *fallback* path only: when route history exists, scoring is
-     * percentile-based and this constant is unused.
+     * the original brief's worked example. Note that brief's own numbers are
+     * internally inconsistent here: the stated rule "miles x $0.10, and the more
+     * expensive the lower the score" admits no decay coefficient that is also
+     * obviously "correct", so this is fitted to the example rather than derived.
+     *
+     * This is the *fallback* path only: when route history exists, scoring is
+     * percentile-based and this constant is unused. MODEL.md documents the
+     * calibration publicly; the brief itself is a private note, not in this repo.
      */
     distanceDecay: 0.85,
     /** Cached quotes older than this many hours are flagged stale in the UI. */

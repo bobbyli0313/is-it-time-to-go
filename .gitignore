@@ -19,6 +19,10 @@ coverage/
 .env.*
 !.env.example
 
+# Local-only planning notes, deliberately not published
+PLANS.md
+FEASIBILITY.md
+
 # Editor and OS noise
 .DS_Store
 .idea/
