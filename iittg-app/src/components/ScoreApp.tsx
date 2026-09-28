@@ -220,6 +220,7 @@ export function ScoreApp({
               routeLabel={routeLabel}
               dateLabel={dateLabel}
               dataNotes={result.dataNotes}
+              provenance={result.provenance}
               locale={locale}
               t={t}
               onReset={reset}

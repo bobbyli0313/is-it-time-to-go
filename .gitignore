@@ -10,6 +10,9 @@ next-env.d.ts
 # Local npm cache (created because the global ~/.npm cache had root-owned files)
 .npm-cache/
 
+# Disk cache for upstream API responses (TTL-managed)
+.cache/
+
 # Test and build caches
 coverage/
 *.tsbuildinfo

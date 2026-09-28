@@ -1,18 +1,18 @@
 /**
- * Mock data provider — the seam where real APIs will eventually plug in.
+ * Mock data provider.
  *
- * The public functions here are async and return the exact shapes the scoring
- * layer consumes (`ScoreContext` and friends). Swapping in Amadeus, Open-Meteo
- * and Nager.Date later means reimplementing these five functions and nothing
- * else: no component, scorer or test needs to change.
+ * Implements the same `DataProvider` contract as the live sources, so any dimension
+ * can be served from here while others run live. This is what makes a
+ * partially-integrated deployment expressible: weather, holidays and FX go live
+ * first, and pricing stays mocked until Amadeus credentials exist.
  *
- * Three rules the mock data deliberately obeys, because the real data does and
- * the UI must be built against reality from day one:
+ * The mock data deliberately reproduces the real sources' limitations, because the
+ * UI is built against those limitations:
  *
- *  1. Weather is only a real forecast inside a short horizon. Beyond it we return
- *     a climate normal, tagged as such. The mock refuses to pretend.
- *  2. Fares are *cached* quotes with an age, and are unavailable entirely once
- *     the date falls outside the airline booking window.
+ *  1. Weather is only a real forecast inside a short horizon. Beyond it this
+ *     returns a climate normal, tagged as such. The mock refuses to pretend.
+ *  2. Fares are *cached* quotes with an age, and are unavailable entirely once the
+ *     date falls outside the airline booking window.
  *  3. Hotels are a normalised price *index*, never a bookable nightly rate.
  */
 
@@ -37,6 +37,7 @@ import { findRoute } from "./routes";
 import { CLIMATE, FX_VS_CNY, fxRateFor } from "./reference";
 import { bellish, between, rngFor } from "./seed";
 import { hasHolidayCoverage, holidaysInRange } from "./holidays";
+import type { DataProvider } from "./types";
 
 /* --------------------------------------------------------------- settings */
 
@@ -64,7 +65,7 @@ function monthIndex(iso: string): number {
   return Number(iso.slice(5, 7)) - 1;
 }
 
-export async function fetchWeather(
+export async function fetchMockWeather(
   destination: City,
   date: string,
   now: Date = new Date(),
@@ -141,7 +142,7 @@ export async function fetchWeather(
  * by the city's own holiday calendar, which is what actually moves hotel prices
  * in this region (Golden Week, Songkran, Lunar New Year).
  */
-export async function fetchHotelIndex(
+export async function fetchMockHotelIndex(
   destination: City,
   departDate: string,
   holidays: Holiday[],
@@ -271,7 +272,7 @@ function buildHistory(
   return { min, max, median, percentile };
 }
 
-export async function fetchFlightQuote(
+export async function fetchMockFlightQuote(
   origin: City,
   destination: City,
   departDate: string,
@@ -362,7 +363,7 @@ export function toFlightScorerInput(
 
 /* --------------------------------------------------------------- holidays */
 
-export async function fetchHolidays(
+export async function fetchMockHolidays(
   country: string,
   from: string,
   to: string,
@@ -390,7 +391,7 @@ const wo = (currency: string, date: string): number => {
   return (base * ref.cnyToQuote + target) / (2 * ref.cnyToQuote);
 };
 
-export async function fetchFx(
+export async function fetchMockFx(
   origin: City,
   destination: City,
   asOf: string,
@@ -415,35 +416,55 @@ export async function fetchFx(
   };
 }
 
-/* ------------------------------------------------------- convenience bundle */
+/* ------------------------------------------------------ DataProvider adapter */
 
-
-/** Builds everything `scoreTrip` needs, in parallel. */
-export async function buildScoreContext(
-  trip: TripInput,
-  now: Date = new Date(),
-): Promise<ScoreContext> {
-  const [weather, { holidays }, flight, fx] = await Promise.all([
-    fetchWeather(trip.destination, trip.departDate, now),
-    fetchHolidays(trip.destination.country, trip.departDate, trip.returnDate),
-    fetchFlightQuote(
-      trip.origin,
-      trip.destination,
-      trip.departDate,
-      trip.returnDate,
-      now,
-    ),
-    fetchFx(trip.origin, trip.destination, trip.departDate),
-  ]);
-
-  const hotel = await fetchHotelIndex(trip.destination, trip.departDate, holidays);
-
+/**
+ * The mock source expressed through the shared contract. Note the two shape
+ * differences from the raw functions above: flights are wrapped in the tagged union
+ * the scorers expect, and holidays are returned with an explicit coverage flag.
+ */
+export function createMockProvider(): DataProvider {
   return {
-    weather,
-    hotel,
-    flight: toFlightScorerInput(flight, trip.departDate),
-    holidays,
-    fx,
-    computedAt: now.toISOString(),
+    name: "mock",
+
+    fetchWeather(destination, date, now = new Date()) {
+      return fetchMockWeather(destination, date, now);
+    },
+
+    fetchHotelIndex(destination, departDate, holidays) {
+      return fetchMockHotelIndex(destination, departDate, holidays);
+    },
+
+    async fetchFlightQuote(
+      origin,
+      destination,
+      departDate,
+      returnDate,
+      now = new Date(),
+    ) {
+      const quote = await fetchMockFlightQuote(
+        origin,
+        destination,
+        departDate,
+        returnDate,
+        now,
+      );
+      return toFlightScorerInput(quote, departDate);
+    },
+
+    async fetchHolidays(country, from, to) {
+      const { holidays, coverageComplete } = await fetchMockHolidays(
+        country,
+        from,
+        to,
+      );
+      return { holidays, coverageComplete };
+    },
+
+    async fetchFx(origin, destination, now = new Date()) {
+      const asOf = todayForTrip(origin.timezone, destination.timezone, now);
+      const snapshot = await fetchMockFx(origin, destination, asOf);
+      return snapshot ? { snapshot, source: "mock" as const } : null;
+    },
   };
 }

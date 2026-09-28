@@ -174,6 +174,56 @@ answer to *why* the score is what it is, which is the actual product.
 
 ---
 
+---
+
+## Data sources feeding this model
+
+Where each dimension's numbers actually come from, as of the live integration. The
+UI states this per dimension; a partially-live deployment must not look fully live.
+
+| Dimension | Source | Confidence is capped by |
+|---|---|---|
+| Weather | Open-Meteo. Forecast inside 16 days; a **monthly** climate normal beyond it | Provenance: a normal can never be high confidence |
+| Hotel | Amadeus offers reduced to an index (mock until keys exist) | Basket size; the index is relative, never bookable |
+| Flight | Amadeus cached fares (mock until keys exist), percentile within route history | History depth; quote age beyond 24h |
+| Crowding | Nager.Date holidays + a curated peak-period table + a weekend term | It is a proxy, and never claims otherwise |
+| FX | ECB daily reference rates, 12-month range measured from real observations | Pair volatility; static fallback for TWD/VND |
+
+### Three source-driven decisions worth recording
+
+**Climate normals are monthly, not daily.** The first implementation keyed them per
+calendar day, which meant a trip spanning a month boundary pulled several
+Open-Meteo archive responses at 7–10 seconds each, and every distinct day cost its
+own fetch. A month is 30× fewer cache keys for a difference in accuracy that sits
+well inside the noise the model already discloses — a normal is capped at medium
+confidence precisely because it cannot speak to a specific day.
+
+**Peak holiday periods are curated, not inferred.** Nager.Date reports every holiday
+as `Public`, so a single bank holiday and Japan's Golden Week arrive identically.
+Clustering consecutive holidays was tried and rejected: it works for Golden Week but
+is wrong for Chinese New Year and Obon — and Obon is not statutory in Japan, so the
+source does not list it at all. The source is therefore used for coverage and a
+narrow curated table supplies intensity. The `additive` flag on a period means "these
+are travel days the source does not list" rather than "re-weight days the source
+already reports", which is what stops the table from fabricating holidays: in 2026,
+3 May is a Sunday and the observed substitute is 6 May, so 1–3 May are added as a
+travel *period* rather than claimed as public holidays.
+
+**FX is normalised inside the pair's own 12-month range**, measured from real daily
+observations rather than assumed. This is what makes a volatile pair (CNY/JPY) and a
+managed one (CNY/HKD) comparable — and the latter is detected as effectively flat and
+scored neutrally at low confidence rather than treated as if its 0.9% annual drift
+were a signal.
+
+### What the live data changed about the model
+
+Nothing. The five scorers and every constant in `PARAMS` are untouched, which was the
+point of building the model against mock data that reproduced the real sources'
+limitations first. What changed is the *inputs*: `basis` now genuinely varies
+(forecast vs climate normal), fares genuinely carry an age, and the FX source is
+genuinely either ECB or the static table. Every one of those was already a branch the
+model handled and the UI disclosed.
+
 ## What is still undecided
 
 - **Weights are equal.** They should probably not be. A cheap-fare-led traveller
