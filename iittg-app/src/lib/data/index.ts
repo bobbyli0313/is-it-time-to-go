@@ -91,7 +91,7 @@ function createIgnavProvider(credentials: PricingCredentials): DataProvider {
 function createSelfCollectedHotelProvider(datasetPath: string): DataProvider {
   const store = createFileStore(datasetPath);
   return {
-    name: "self-collected-hotel-median",
+    name: "hotelbeds-collected-median",
     fetchWeather() {
       throw new Error("The hotel dataset does not provide weather");
     },
@@ -153,7 +153,7 @@ export function resolveProviders(): ResolvedProviders {
       holidays: sources.holidays === "live" ? "live-nager-date" : "mock",
       fx: sources.fx === "live" ? "live-ecb" : "mock",
       flight: useLiveFlight ? "live-ignav" : "mock",
-      hotel: useSelfCollectedHotel ? "self-collected" : "mock",
+      hotel: useSelfCollectedHotel ? "collected-hotelbeds" : "mock",
     },
   };
 }

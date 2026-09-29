@@ -73,7 +73,7 @@ export const STALE_AFTER_DAYS = 45;
 
 /**
  * Ceiling on confidence. Below the scorer's 0.66 "high" threshold on purpose:
- * this is collected chain-direct data, never a survey, and the badge has to say so.
+ * this is collected aggregator data, never a survey, and the badge has to say so.
  */
 export const MAX_CONFIDENCE = 0.62;
 
@@ -123,7 +123,7 @@ export function unavailableQuote(
     perNightLocal: 0,
     baselineLocal,
     confidence: 0,
-    basis: "chain-direct-median",
+    basis: "collected-median",
     sampleSize: 0,
     disclosure,
   };
@@ -231,7 +231,7 @@ export function computeCityReferencePrice(
       perNightLocal: medianLocal,
       baselineLocal: census.baselineLocal,
       confidence: Math.round(confidence * 1000) / 1000,
-      basis: "chain-direct-median",
+      basis: "collected-median",
       sampleSize: propertyCount,
       /**
        * Only claimed when the census really enumerates a universe. With a partial

@@ -26,7 +26,15 @@ export interface DataSources {
   holidays: SourceMode;
   fx: SourceMode;
   flight: SourceMode;
-  hotel: SourceMode;
+  /**
+   * Hotels are deliberately absent.
+   *
+   * They were a `SourceMode` that nothing read: the hotel path is switched by
+   * `getHotelSource()`, because "mock or live" is the wrong question for a dimension
+   * whose data is *collected* rather than *called*. Keeping the dead field meant
+   * `IITTG_SOURCE_HOTEL=mock` looked like it controlled something, and the test suite
+   * pinned it believing it did.
+   */
 }
 
 /** How the hotel reference price is sourced. */
@@ -50,8 +58,9 @@ function readMode(value: string | undefined, fallback: SourceMode): SourceMode {
 
 /**
  * Defaults are chosen so `npm run dev` works with no configuration at all: the
- * credential-free sources come up live, and the credential-gated ones stay on mock
- * data until a key is supplied.
+ * credential-free sources come up live, hotel prices come from the collected dataset
+ * if one exists, and the credential-gated sources stay on mock data until a key is
+ * supplied.
  */
 export function getDataSources(): DataSources {
   return {
@@ -61,7 +70,6 @@ export function getDataSources(): DataSources {
     // Still mock by default: a key is required, and an unauthenticated call would
     // simply fail on every request.
     flight: readMode(process.env.IITTG_SOURCE_FLIGHT, "mock"),
-    hotel: readMode(process.env.IITTG_SOURCE_HOTEL, "mock"),
   };
 }
 
@@ -78,11 +86,18 @@ export function getFlightCredentials(): PricingCredentials | null {
   return { apiKey, provider: process.env.IITTG_FLIGHT_PROVIDER ?? "ignav" };
 }
 
-/** Where hotel price samples come from. Defaults to the mock index. */
+/**
+ * Where hotel prices come from.
+ *
+ * Defaults to the collected dataset. This used to default to the mock index, from
+ * when collection did not exist yet — which meant a deployment with a perfectly good
+ * dataset still showed synthetic prices labelled "sample data" until someone set an
+ * environment variable. `IITTG_HOTEL_SOURCE=mock` is now the explicit opt-in for a
+ * demo, and a missing dataset degrades to "hotel pricing unavailable" rather than to
+ * invented numbers.
+ */
 export function getHotelSource(): HotelSource {
-  return process.env.IITTG_HOTEL_SOURCE === "self-collected"
-    ? "self-collected"
-    : "mock";
+  return process.env.IITTG_HOTEL_SOURCE === "mock" ? "mock" : "self-collected";
 }
 
 /**

@@ -536,7 +536,7 @@ describe("runCollection", () => {
     );
     expect(quote.perNightLocal).toBe(11_000);
     expect(quote.sampleSize).toBe(12);
-    expect(quote.basis).toBe("chain-direct-median");
+    expect(quote.basis).toBe("collected-median");
   });
 
   it("reports a refused rate fetch instead of shipping an empty city quietly", async () => {

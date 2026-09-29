@@ -174,7 +174,7 @@ export function scoreTrip(
   if (context.weather.basis === "climate-normal") {
     warnings.push("warning.weatherIsClimateNormal");
   }
-  if (context.hotel.basis !== "chain-direct-median") {
+  if (context.hotel.basis !== "collected-median") {
     warnings.push("warning.hotelIsMock");
   }
   if (context.hotel.stale) {

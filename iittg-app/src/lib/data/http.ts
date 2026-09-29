@@ -48,7 +48,13 @@ export interface HttpJsonOptions {
    * Treat this status as "no data" rather than an error. Nager.Date answers 404 for
    * a country/year it does not cover, which is a coverage gap, not a failure.
    */
-  emptyOnStatus?: number;
+  /**
+   * Statuses that mean "no data" rather than "an error". Nager.Date answers 404 for
+   * a country/year it does not cover and **204 with an empty body** for one it has
+   * no calendar for at all — treating the latter as a parse failure threw away the
+   * whole year instead of reporting a coverage gap.
+   */
+  emptyOnStatus?: number | number[];
   /** Defaults to GET. Ignav's fare search, for instance, is POST-only. */
   method?: "GET" | "POST";
   /** JSON body, sent with `content-type: application/json` when present. */
@@ -169,7 +175,13 @@ export async function fetchJson<T>(
         cache: "no-store",
       });
 
-      if (emptyOnStatus !== undefined && response.status === emptyOnStatus) {
+      const emptyStatuses =
+        emptyOnStatus === undefined
+          ? []
+          : Array.isArray(emptyOnStatus)
+            ? emptyOnStatus
+            : [emptyOnStatus];
+      if (emptyStatuses.includes(response.status)) {
         return null;
       }
 

@@ -74,6 +74,11 @@ function stubFetch(options: { archive?: boolean } = {}) {
           : year === "2026" && country === "CN"
             ? fixture(FIXTURES.cn2026)
             : null;
+      if (country === "TH") {
+        // Thailand, Taiwan and Malaysia answer exactly this: 204 with no body. It is
+        // a coverage gap, not a parse failure, and the two must not be conflated.
+        return new Response(null, { status: 204 });
+      }
       if (body === null) {
         // Mirrors the real behaviour for an uncovered country/year.
         return new Response("Not Found", { status: 404 });
@@ -248,6 +253,63 @@ describe("live holidays (Nager.Date)", () => {
     expect(new Set(dates).size).toBe(dates.length);
   });
 
+  /**
+   * The bug this covers: Nager.Date publishes one day per Chinese festival — the
+   * statutory anchor, not the State Council's arrangement — so a five-day National
+   * Day holiday reached the scorer as a single peak day and Shanghai scored 93.7.
+   */
+  it("fills China's multi-day blocks, which the source reports as one day", async () => {
+    stubFetch();
+    const { holidays } = await fetchLiveHolidays("CN", "2026-10-01", "2026-10-05");
+
+    expect(holidays.map((h) => h.date)).toEqual([
+      "2026-10-01",
+      "2026-10-02",
+      "2026-10-03",
+      "2026-10-04",
+      "2026-10-05",
+    ]);
+    // Every day of the block is a peak, not just the day the source lists.
+    expect(holidays.every((h) => h.weight === "peak")).toBe(true);
+    // The listed day keeps its own name; the added days carry the period's.
+    expect(holidays[0].name.en).toBe("National Day");
+    expect(holidays[1].name.en).toBe("National Day Golden Week");
+  });
+
+  it("still adds the peak when the source has no calendar for the country at all", async () => {
+    stubFetch();
+    // Songkran, in a country the source answers 204 for.
+    const { holidays, coverageComplete } = await fetchLiveHolidays(
+      "TH",
+      "2026-04-13",
+      "2026-04-15",
+    );
+
+    expect(holidays.map((h) => h.date)).toEqual([
+      "2026-04-13",
+      "2026-04-14",
+      "2026-04-15",
+    ]);
+    expect(holidays.every((h) => h.weight === "peak")).toBe(true);
+    /**
+     * And it still says so. The curated table covers the documented peaks; outside
+     * them the model genuinely does not know, and claiming complete coverage would
+     * let a source gap quietly improve a crowding score.
+     */
+    expect(coverageComplete).toBe(false);
+  });
+
+  it("treats an empty response as a coverage gap, not a failure", async () => {
+    stubFetch();
+    // A 204 must not throw: the whole year used to be discarded as an outage.
+    const { holidays } = await fetchLiveHolidays("TH", "2026-12-31", "2027-01-02");
+    expect(holidays.map((h) => h.date)).toEqual([
+      "2026-12-31",
+      "2027-01-01",
+      "2027-01-02",
+    ]);
+  });
+
   it("reports incomplete coverage for a year the source does not serve", async () => {
     stubFetch();
     // 2099 has no fixture, so the stub answers 404 exactly as the real API does for
@@ -258,8 +320,16 @@ describe("live holidays (Nager.Date)", () => {
       "2099-12-31",
     );
 
-    expect(holidays).toEqual([]);
+    /**
+     * The curated peaks survive a source outage — that is the point of curating them.
+     * What must not happen is a claim of coverage: outside those windows the model has
+     * no calendar at all, and the flag is what says so.
+     */
     expect(coverageComplete).toBe(false);
+    expect(holidays.map((h) => h.date)).toContain("2099-08-13"); // Obon
+    expect(holidays.every((h) => h.weight === "peak")).toBe(true);
+    // And nothing statutory is fabricated: the source listed none of it.
+    expect(holidays.some((h) => h.date === "2099-01-01")).toBe(false);
   });
 
   it("fetches each year in a spanning range separately", async () => {

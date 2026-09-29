@@ -25,7 +25,14 @@ export default defineConfig({
       IITTG_SOURCE_HOLIDAYS: "mock",
       IITTG_SOURCE_FX: "mock",
       IITTG_SOURCE_FLIGHT: "mock",
-      IITTG_SOURCE_HOTEL: "mock",
+      /**
+       * Hotels are pinned through their own switch. `IITTG_SOURCE_HOTEL` used to be
+       * set here, but nothing read it: the hotel path asks `IITTG_HOTEL_SOURCE`,
+       * which now defaults to the collected dataset — so without this the suite
+       * would score "hotel unavailable" instead of the deterministic synthetic index
+       * it means to exercise.
+       */
+      IITTG_HOTEL_SOURCE: "mock",
       // Keep tests from writing cache files into the working tree.
       IITTG_CACHE_DISK: "0",
     },

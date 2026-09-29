@@ -77,11 +77,12 @@ export interface DataProvenance {
   fx: "live-ecb" | "static-reference" | "mock" | "not-applicable";
   flight: "live-ignav" | "mock";
   /**
-   * Hotels are a median over samples this app collected itself, not a
-   * third-party feed. `self-collected` is deliberately distinct from `mock`, so a
-   * deployment that has never run the collector cannot look live.
+   * Hotels are a median over rates this app collected from Hotelbeds, and the label
+   * names the source because that is what a reader needs to judge the number.
+   * Deliberately distinct from `mock`, so a deployment that has never run the
+   * collector cannot look live.
    */
-  hotel: "self-collected" | "mock";
+  hotel: "collected-hotelbeds" | "mock";
 }
 
 export interface BuiltContext {

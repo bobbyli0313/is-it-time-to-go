@@ -268,6 +268,38 @@ export function scoreWeather(
 export function scoreHotel(quote: HotelQuote): DimensionScore {
   const p = PARAMS.hotel;
 
+  /**
+   * No price is not a cheap price.
+   *
+   * A city the collector has not covered arrives as a zero-confidence quote with no
+   * amount. Scoring it produced `0 / 0` — NaN — which raised the total to NaN and
+   * serialised as `"total": null` in the API response. It is excluded instead, exactly
+   * as an unsold fare is, and the remaining weights redistribute over the dimensions
+   * that do have data.
+   */
+  if (quote.sampleSize === 0 || !(quote.perNightLocal > 0) || !(quote.baselineLocal > 0)) {
+    return {
+      key: "hotel",
+      score: null,
+      applicable: false,
+      // "High" confidence in the *absence*, mirroring the unavailable-fare branch: the
+      // reason is known rather than uncertain.
+      confidence: "high",
+      weight: PARAMS.total.weights.hotel,
+      facts: {
+        basis: quote.basis,
+        unavailable: "not-collected",
+        disclaimer: "fact.medianNotBookable",
+      },
+      drivers: [
+        quote.basis === "collected-median"
+          ? "hotel.driver.notCollected"
+          : "hotel.driver.mockFlat",
+      ],
+      debug: undefined,
+    };
+  }
+
   const index = quote.perNightLocal / quote.baselineLocal;
   // Deviation is clamped at 0: at or below baseline is full marks, per spec.
   const deviation = Math.max(0, index - 1);
@@ -290,8 +322,8 @@ export function scoreHotel(quote: HotelQuote): DimensionScore {
   if (quote.stale) confidenceValue = Math.min(confidenceValue, 0.35);
 
   const drivers: string[] = [
-    quote.basis === "chain-direct-median"
-      ? "hotel.driver.chainMedian"
+    quote.basis === "collected-median"
+      ? "hotel.driver.collectedMedian"
       : "hotel.driver.mockFlat",
   ];
   if (index <= 1) drivers.push("hotel.driver.belowBaseline");

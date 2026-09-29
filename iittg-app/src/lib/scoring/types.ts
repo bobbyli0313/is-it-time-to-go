@@ -65,12 +65,16 @@ export interface WeatherSample {
 /**
  * How the hotel number was produced.
  *
- * - `chain-direct-median`: the median of nightly rates this app collected from its
- *   price source (Hotelbeds). A level, not a bookable quote.
- * - `mock-flat`: the prototype's synthetic index, used until a city has been
- *   collected.
+ * - `collected-median`: the median of nightly rates this app collected from its price
+ *   source (Hotelbeds). A level, not a bookable quote.
+ * - `mock-flat`: the prototype's synthetic index, shown only when explicitly asked
+ *   for with `IITTG_HOTEL_SOURCE=mock`.
+ *
+ * The name used to be `chain-direct-median`, from when the plan was to read chains'
+ * own booking sites. Nothing about it is chain-direct, and a stale name in a
+ * discriminated union is how a provenance rule quietly stops being true.
  */
-export type HotelBasis = "chain-direct-median" | "mock-flat";
+export type HotelBasis = "collected-median" | "mock-flat";
 
 /** What a hotel dataset permits the app to publish. Mirrors `HotelDisclosure`. */
 export type HotelDisclosure = "price" | "index";

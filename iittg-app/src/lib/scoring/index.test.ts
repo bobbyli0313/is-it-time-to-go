@@ -244,7 +244,7 @@ describe("scoreHotel", () => {
     perNightLocal,
     baselineLocal,
     confidence: 0.8,
-    basis: "chain-direct-median",
+    basis: "collected-median",
     sampleSize: 20,
   });
 
@@ -282,12 +282,61 @@ describe("scoreHotel", () => {
 
   it("labels the basis so the UI can say this is collected data, not a quote", () => {
     const s = scoreHotel({ ...quote(1000), propertyUniverse: 51, collectedAt: "2026-09-28T00:00:00Z" });
-    expect(s.facts.basis).toBe("chain-direct-median");
+    expect(s.facts.basis).toBe("collected-median");
     expect(s.facts.disclaimer).toBe("fact.medianNotBookable");
     // Coverage is disclosed, not implied: 9 priced out of 51 known.
     expect(s.facts.sampleSize).toBe(20);
     expect(s.facts.propertyUniverse).toBe(51);
     expect(s.facts.collectedAt).toBe("2026-09-28T00:00:00Z");
+  });
+
+  it("excludes a destination with no collected prices instead of scoring it", () => {
+    const s = scoreHotel({
+      perNightLocal: 0,
+      baselineLocal: 0,
+      confidence: 0,
+      basis: "collected-median",
+      sampleSize: 0,
+    });
+
+    // 0 / 0 used to reach the arithmetic and raise the whole total to NaN, which
+    // serialised as `"total": null` in the API response.
+    expect(s.score).toBeNull();
+    expect(s.applicable).toBe(false);
+    expect(s.drivers).toContain("hotel.driver.notCollected");
+  });
+
+  it("keeps the total finite when the hotel dimension is excluded", () => {
+    const context = {
+      weather: {
+        date: "2026-10-01",
+        basis: "forecast" as const,
+        tempC: 24,
+        humidityPct: 60,
+        tempSpreadC: 3,
+        humiditySpreadPct: 10,
+      },
+      hotel: {
+        perNightLocal: 0,
+        baselineLocal: 0,
+        confidence: 0,
+        basis: "collected-median" as const,
+        sampleSize: 0,
+      },
+      flight: { kind: "unavailable" as const, reason: "no-quote" as const },
+      holidays: [],
+      fx: null,
+      computedAt: "2026-09-30T00:00:00Z",
+    };
+    const result = scoreTrip(
+      { ...TRIP, destination: { ...HND } },
+      context,
+    );
+
+    expect(Number.isFinite(result.total)).toBe(true);
+    // The weights redistribute over what is left rather than diluting with a zero.
+    expect(result.dimensions.find((d) => d.key === "hotel")!.applicable).toBe(false);
+    expect(result.total).toBeGreaterThan(0);
   });
 
   it("withholds the amounts in index-only mode, and reports the distance instead", () => {
@@ -725,7 +774,7 @@ describe("scoreTrip", () => {
       perNightLocal: 1000,
       baselineLocal: 500,
       confidence: 0.8,
-      basis: "chain-direct-median",
+      basis: "collected-median",
       sampleSize: 20,
     } satisfies HotelQuote,
     flight: {

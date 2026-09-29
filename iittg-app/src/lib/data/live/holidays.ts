@@ -72,12 +72,19 @@ interface PeakPeriod {
  * `normal` rather than breaking.
  */
 const PEAK_PERIODS: PeakPeriod[] = [
-  // China — Spring Festival (statutory days plus the travel shoulders).
-  { country: "CN", from: "2026-02-15", to: "2026-02-23", name: { en: "Spring Festival travel period", zh: "春节假期" } },
-  // China — Labour Day.
-  { country: "CN", from: "2026-05-01", to: "2026-05-05", name: { en: "Labour Day holiday", zh: "劳动节假期" } },
-  // China — National Day / Golden Week.
-  { country: "CN", from: "2026-10-01", to: "2026-10-07", name: { en: "National Day Golden Week", zh: "国庆黄金周" } },
+  /**
+   * China — the three multi-day blocks, all `additive`.
+   *
+   * Nager.Date publishes **one day per Chinese festival** (2026-10-01 for National
+   * Day, 2026-02-17 for Spring Festival), because it lists the statutory anchor date
+   * rather than the State Council's arrangement. The other days are not inventions:
+   * they are the decreed days off, and the source simply does not carry them. Without
+   * these flags a Shanghai trip over National Day scored 93.7 — a five-day national
+   * holiday with one day counted.
+   */
+  { country: "CN", from: "2026-02-15", to: "2026-02-23", name: { en: "Spring Festival travel period", zh: "春节假期" }, additive: true },
+  { country: "CN", from: "2026-05-01", to: "2026-05-05", name: { en: "Labour Day holiday", zh: "劳动节假期" }, additive: true },
+  { country: "CN", from: "2026-10-01", to: "2026-10-07", name: { en: "National Day Golden Week", zh: "国庆黄金周" }, additive: true },
   /**
    * Japan — Golden Week. Split deliberately into two rows.
    *
@@ -99,29 +106,63 @@ const PEAK_PERIODS: PeakPeriod[] = [
    * so those days are counted at all.
    */
   { country: "JP", from: "2026-08-13", to: "2026-08-16", name: { en: "Obon", zh: "盂兰盆节" }, additive: true },
-  // Korea — Seollal and Chuseok, the two multi-day travel peaks.
+  /**
+   * Korea — Seollal and Chuseok. Not additive: Nager.Date lists all three days of
+   * each, which this table only needs to promote to `peak`.
+   */
   { country: "KR", from: "2026-02-16", to: "2026-02-18", name: { en: "Seollal", zh: "春节" } },
   { country: "KR", from: "2026-09-24", to: "2026-09-26", name: { en: "Chuseok", zh: "秋收节" } },
-  // Thailand — Songkran is the largest domestic travel period of the year.
-  { country: "TH", from: "2026-04-13", to: "2026-04-15", name: { en: "Songkran", zh: "泼水节" } },
-  { country: "TH", from: "2026-12-31", to: "2027-01-02", name: { en: "New Year period", zh: "跨年假期" } },
-  // Taiwan — Lunar New Year.
-  { country: "TW", from: "2026-02-16", to: "2026-02-21", name: { en: "Lunar New Year", zh: "农历新年" } },
-  // Vietnam — Tet.
-  { country: "VN", from: "2026-02-16", to: "2026-02-20", name: { en: "Tet", zh: "春节" } },
-  // Indonesia / Malaysia / Singapore — shared Lunar New Year peak.
+  /**
+   * Thailand, Taiwan and Malaysia — the source has **no calendar at all** (HTTP 204,
+   * empty body, verified 2026-09-30). Their peak periods are therefore additive by
+   * necessity: without them Songkran, Lunar New Year and the New Year period score as
+   * ordinary days. Coverage is still reported incomplete, because outside these
+   * windows the model genuinely does not know.
+   */
+  { country: "TH", from: "2026-04-13", to: "2026-04-15", name: { en: "Songkran", zh: "泼水节" }, additive: true },
+  { country: "TH", from: "2026-12-31", to: "2027-01-02", name: { en: "New Year period", zh: "跨年假期" }, additive: true },
+  { country: "TW", from: "2026-02-16", to: "2026-02-21", name: { en: "Lunar New Year", zh: "农历新年" }, additive: true },
+  { country: "MY", from: "2026-02-17", to: "2026-02-18", name: { en: "Chinese New Year", zh: "农历新年" }, additive: true },
+  /**
+   * Vietnam, Indonesia and the Philippines — the source has a calendar but omits
+   * days inside these windows (Tet week, Nyepi, the tail of Holy Week and Christmas).
+   * Additive so the omitted days count; the listed ones keep their source names.
+   */
+  { country: "VN", from: "2026-02-16", to: "2026-02-20", name: { en: "Tet", zh: "春节" }, additive: true },
+  { country: "ID", from: "2026-03-19", to: "2026-03-22", name: { en: "Nyepi period", zh: "静居日假期" }, additive: true },
+  { country: "PH", from: "2026-04-02", to: "2026-04-05", name: { en: "Holy Week", zh: "圣周" }, additive: true },
+  { country: "PH", from: "2026-12-24", to: "2026-12-31", name: { en: "Christmas season", zh: "圣诞假期" }, additive: true },
+  /**
+   * Singapore and Hong Kong — fully covered by the source, so these only re-weight.
+   */
   { country: "SG", from: "2026-02-17", to: "2026-02-18", name: { en: "Chinese New Year", zh: "农历新年" } },
-  { country: "MY", from: "2026-02-17", to: "2026-02-18", name: { en: "Chinese New Year", zh: "农历新年" } },
-  { country: "ID", from: "2026-03-19", to: "2026-03-22", name: { en: "Nyepi period", zh: "静居日假期" } },
-  // Philippines — Holy Week is the main domestic travel peak.
-  { country: "PH", from: "2026-04-02", to: "2026-04-05", name: { en: "Holy Week", zh: "圣周" } },
-  { country: "PH", from: "2026-12-24", to: "2026-12-31", name: { en: "Christmas season", zh: "圣诞假期" } },
-  // Hong Kong.
   { country: "HK", from: "2026-02-17", to: "2026-02-19", name: { en: "Lunar New Year", zh: "农历新年" } },
 ];
 
 function inPeriod(date: string, period: PeakPeriod): boolean {
   return date >= period.from && date <= period.to;
+}
+
+/**
+ * The days a period covers in a given year.
+ *
+ * The month/day are kept and the year substituted, so one row serves every year.
+ * When the end lands *before* the start — Thailand's New Year period runs 31 Dec to
+ * 2 Jan — the end belongs to the following year. Substituting the leading digits on
+ * both ends instead produced `2026-12-31 .. 2026-01-02`, an empty range, which is why
+ * that period added nothing at all.
+ */
+function periodDates(period: PeakPeriod, year: number): string[] {
+  const start = `${year}${period.from.slice(4)}`;
+  const endMonthDay = period.to.slice(4);
+  const end =
+    endMonthDay < period.from.slice(4)
+      ? `${year + 1}${endMonthDay}`
+      : `${year}${endMonthDay}`;
+
+  const out: string[] = [];
+  for (let d = start; d <= end; d = nextDay(d)) out.push(d);
+  return out;
 }
 
 function periodsFor(country: CountryCode, date: string): PeakPeriod[] {
@@ -144,6 +185,7 @@ const CLOSED_TYPES = new Set(["Public", "Bank", "Authorities", "School"]);
 function normalize(
   entries: NagerHoliday[],
   country: CountryCode,
+  years: number[],
 ): Holiday[] {
   const out: Holiday[] = [];
 
@@ -166,18 +208,21 @@ function normalize(
   }
 
   /**
-   * Additive peak periods: days inside a known travel peak that the source does not
-   * list as holidays, most importantly Japan's Obon. Without these the model would
-   * report zero crowding during one of the busiest weeks of the Japanese year.
+   * Additive peak periods: days inside a documented travel peak that the source does
+   * not list, most importantly Japan's Obon and China's multi-day statutory blocks.
+   * Without these the model reports near-zero crowding during the busiest weeks of
+   * the year — which is exactly what happened to a Shanghai trip over National Day.
+   *
+   * `years` comes from the *request*, not from the payload. Deriving it from the
+   * entries meant a country the source has no calendar for at all (Thailand, Taiwan
+   * and Malaysia answer 204) contributed nothing — not even the peaks this table is
+   * supposed to guarantee.
    */
   const covered = new Set(out.map((h) => h.date));
-  const years = new Set(entries.map((h) => h.date.slice(0, 4)));
   for (const year of years) {
     for (const period of PEAK_PERIODS) {
       if (period.country !== country || !period.additive) continue;
-      const from = period.from.replace(/^\d{4}/, year);
-      const to = period.to.replace(/^\d{4}/, year);
-      for (let d = from; d <= to; d = nextDay(d)) {
+      for (const d of periodDates(period, year)) {
         if (covered.has(d)) continue;
         out.push({
           date: d,
@@ -201,7 +246,7 @@ function nextDay(iso: string): string {
 async function fetchYear(
   country: CountryCode,
   year: number,
-): Promise<Holiday[]> {
+): Promise<{ holidays: Holiday[]; fromSource: boolean }> {
   const url = `${BASE_URL}/${year}/${encodeURIComponent(country)}`;
 
   /**
@@ -212,11 +257,18 @@ async function fetchYear(
   const body = await fetchJson<NagerHoliday[]>(url, {
     timeoutMs: 8_000,
     attempts: 3,
-    emptyOnStatus: 404,
+    // 404: no calendar for this country/year. 204: an empty calendar. Both are
+    // coverage gaps, and neither should be mistaken for "no holidays".
+    emptyOnStatus: [404, 204],
   });
 
-  if (body === null) return [];
-  return Array.isArray(body) ? normalize(body, country) : [];
+  /**
+   * An empty calendar still runs through `normalize`, because that is what applies the
+   * curated peaks. Returning early here is why Thailand — which answers 204 to every
+   * request — had no Songkran, no New Year period, and nothing at all.
+   */
+  const entries = Array.isArray(body) ? body : [];
+  return { holidays: normalize(entries, country, [year]), fromSource: entries.length > 0 };
 }
 
 /**
@@ -240,7 +292,7 @@ export async function fetchLiveHolidays(
    * `coverageComplete: false` flag is what stops the gap from being mistaken for
    * "no holidays", which would silently *improve* the crowding score.
    */
-  let perYear: Holiday[][];
+  let perYear: Array<{ holidays: Holiday[]; fromSource: boolean }>;
   try {
     perYear = await Promise.all(
       years.map((year) =>
@@ -254,17 +306,19 @@ export async function fetchLiveHolidays(
     return { holidays: [], coverageComplete: false };
   }
 
-  const all = perYear.flat();
+  const all = perYear.flatMap((year) => year.holidays);
   const holidays = all.filter((h) => h.date >= from && h.date <= to);
 
   /**
-   * Coverage is only complete if every requested year actually returned data. An
-   * empty year is ambiguous — it could mean "no holidays" or "no data" — and
-   * treating it as covered would let a source gap silently *improve* the crowding
-   * score. No real country in scope has zero public holidays in a year, so an empty
-   * result is always a gap.
+   * Coverage is about the *source*, not about the merged result.
+   *
+   * An empty year is ambiguous — "no holidays" or "no data" — and treating it as
+   * covered would let a source gap silently *improve* the crowding score. It also has
+   * to be measured before the curated peaks are added: those are known windows, not a
+   * calendar, and reporting a country as covered because Songkran was filled in would
+   * claim knowledge of the other 362 days that does not exist.
    */
-  const coverageComplete = perYear.every((yearHolidays) => yearHolidays.length > 0);
+  const coverageComplete = perYear.every((year) => year.fromSource);
 
   return { holidays, coverageComplete };
 }

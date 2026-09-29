@@ -16,11 +16,20 @@ npm install
 npm run dev          # http://localhost:3000
 ```
 
-No configuration is required: weather, holidays and FX are live out of the box. To
-enable flight pricing, copy `.env.example` to `.env.local` and add an Ignav key.
+No configuration is required: weather, holidays and FX are live out of the box. Flight
+pricing needs an Ignav key and hotel prices need a collection run — copy
+`.env.example` to `.env.local` for the first, and run the collector for the second:
 
 ```bash
-npm test             # 225 tests, offline (fixtures, no network)
+npm run crawl:hotels -- --cities tokyo,osaka --dates 2026-10-20   # writes data/hotel-prices.json
+```
+
+Until a city has been collected its hotel dimension reports as **unavailable** (excluded
+from the total rather than scored as cheap). `IITTG_HOTEL_SOURCE=mock` swaps in a
+synthetic index for demos, labelled as sample data throughout.
+
+```bash
+npm test             # 255 tests, offline (fixtures, no network)
 npm run typecheck    # tsc --noEmit
 npm run lint         # eslint
 npm run build        # production build

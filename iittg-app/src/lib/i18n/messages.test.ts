@@ -94,17 +94,25 @@ function collectDimensions(): DimensionScore[] {
   }
 
   const hotelQuotes: HotelQuote[] = [
-    { perNightLocal: 300, baselineLocal: 500, confidence: 0.8, basis: "chain-direct-median", sampleSize: 20 },
-    { perNightLocal: 700, baselineLocal: 500, confidence: 0.8, basis: "chain-direct-median", sampleSize: 20 },
-    { perNightLocal: 1000, baselineLocal: 500, confidence: 0.8, basis: "chain-direct-median", sampleSize: 20 },
-    { perNightLocal: 2600, baselineLocal: 500, confidence: 0.8, basis: "chain-direct-median", sampleSize: 3 },
+    { perNightLocal: 300, baselineLocal: 500, confidence: 0.8, basis: "collected-median", sampleSize: 20 },
+    { perNightLocal: 700, baselineLocal: 500, confidence: 0.8, basis: "collected-median", sampleSize: 20 },
+    { perNightLocal: 1000, baselineLocal: 500, confidence: 0.8, basis: "collected-median", sampleSize: 20 },
+    { perNightLocal: 2600, baselineLocal: 500, confidence: 0.8, basis: "collected-median", sampleSize: 3 },
     { perNightLocal: 800, baselineLocal: 500, confidence: 0.4, basis: "mock-flat", sampleSize: 3 },
-    // A collected median with full disclosure, and a stale, single-chain one.
+    // A destination the collector has not covered: excluded, never scored as cheap.
+    {
+      perNightLocal: 0,
+      baselineLocal: 0,
+      confidence: 0,
+      basis: "collected-median",
+      sampleSize: 0,
+    },
+    // A collected median with full disclosure, and a stale one.
     {
       perNightLocal: 12_000,
       baselineLocal: 11_000,
       confidence: 0.6,
-      basis: "chain-direct-median",
+      basis: "collected-median",
       sampleSize: 34,
       propertyUniverse: 51,
       collectedAt: "2026-09-28T00:00:00Z",

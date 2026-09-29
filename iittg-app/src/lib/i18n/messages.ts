@@ -66,8 +66,8 @@ const en = {
   "source.holidays.mock": "Sample data",
   "source.flight.live-ignav": "Live · Ignav",
   "source.flight.mock": "Sample data",
-  "source.hotel.self-collected": "Own collection · median of chain rates",
-  "source.hotel.mock": "Sample data (synthetic index)",
+  "source.hotel.collected-hotelbeds": "Hotelbeds · rates collected by this app",
+  "source.hotel.mock": "Sample data (synthetic — no dataset collected)",
   "source.fx.live-ecb": "Live · ECB reference rates",
   "source.fx.static-reference": "Static reference table",
   "source.fx.mock": "Sample data",
@@ -158,16 +158,19 @@ const en = {
   "fact.seasonalFactor": "Seasonal factor",
   "fact.nearbyHolidayDays": "Holidays within ±3 days",
   "fact.medianNotBookable": "Collected median — not a bookable rate",
-  "hotel.basis.chain-direct-median": "Collected chain rates (median)",
-  "hotel.basis.mock-flat": "Sample data (synthetic)",
-  "hotel.driver.chainMedian":
-    "Scored on the median nightly rate across this city's collected hotels",
-  "hotel.driver.mockFlat": "Backed by sample data in this prototype",
+  "hotel.basis.collected-median": "Hotelbeds median rate",
+  "hotel.basis.mock-flat": "Sample data (synthetic index)",
+  "hotel.driver.collectedMedian":
+    "Scored on the median nightly rate Hotelbeds returns for this city",
+  "hotel.driver.mockFlat":
+    "Synthetic sample data — run the collector for this city to replace it",
   "hotel.driver.belowBaseline": "At or below the baseline nightly rate",
   "hotel.driver.aboveBaseline": "Above the baseline nightly rate",
   "hotel.driver.farAboveBaseline": "Well above the baseline nightly rate",
   "hotel.driver.thinSample": "Few properties behind this median",
   "hotel.driver.staleSamples": "The collected prices are months old",
+  "hotel.driver.notCollected":
+    "No hotel prices have been collected for this destination",
   "hotel.driver.indexOnly":
     "This source permits publishing the distance from the anchor, not the price itself",
 
@@ -235,7 +238,7 @@ const en = {
   "warning.weatherIsClimateNormal":
     "Weather uses a historical average, not a forecast — it cannot predict a specific day this far ahead.",
   "warning.hotelIsMock":
-    "Hotel prices are synthetic sample data, not collected prices.",
+    "Hotel prices are synthetic sample data — no price dataset has been collected.",
   "warning.flightUnavailable":
     "No fare is available for these dates, so flight price is excluded from the total rather than counted as zero.",
   "warning.flightNotCachedFare":
@@ -248,7 +251,7 @@ const en = {
     "Holiday data does not cover every year in this range, so crowding may be understated.",
 
   "footer.disclaimer":
-    "Prototype with sample data. Not connected to live fare, weather or hotel feeds.",
+    "Weather, holidays, exchange rates and hotel prices are live where a source is configured; dimensions without one are labelled as sample data.",
   "footer.language": "Language",
 
   "time.justNow": "just now",
@@ -302,8 +305,8 @@ const zh: Record<MessageKey, string> = {
   "source.holidays.mock": "示例数据",
   "source.flight.live-ignav": "实时 · Ignav",
   "source.flight.mock": "示例数据",
-  "source.hotel.self-collected": "自有采集 · 酒店直连价中位数",
-  "source.hotel.mock": "示例数据（合成指数）",
+  "source.hotel.collected-hotelbeds": "Hotelbeds · 自行采集的房价",
+  "source.hotel.mock": "示例数据（合成，尚未采集数据集）",
   "source.fx.live-ecb": "实时 · 欧洲央行参考汇率",
   "source.fx.static-reference": "静态参考表",
   "source.fx.mock": "示例数据",
@@ -411,15 +414,16 @@ const zh: Record<MessageKey, string> = {
   "weather.driver.climateNormal":
     "距今太远无法预报，此处为当月历史平均值",
 
-  "hotel.basis.chain-direct-median": "自行采集的直连价（中位数）",
-  "hotel.basis.mock-flat": "示例数据（合成）",
-  "hotel.driver.chainMedian": "按该城市已采集酒店的中位每晚价格评分",
-  "hotel.driver.mockFlat": "原型阶段由合成示例数据支撑",
+  "hotel.basis.collected-median": "Hotelbeds 中位房价",
+  "hotel.basis.mock-flat": "示例数据（合成指数）",
+  "hotel.driver.collectedMedian": "按 Hotelbeds 返回的该城市每晚房价中位数评分",
+  "hotel.driver.mockFlat": "当前为合成示例数据，运行该城市采集任务即可替换",
   "hotel.driver.belowBaseline": "不高于基准每晚价格",
   "hotel.driver.aboveBaseline": "高于基准每晚价格",
   "hotel.driver.farAboveBaseline": "远高于基准每晚价格",
   "hotel.driver.thinSample": "支撑该中位价的酒店数量偏少",
   "hotel.driver.staleSamples": "已采集的价格距今已有数月",
+  "hotel.driver.notCollected": "该目的地尚未采集酒店价格",
   "hotel.driver.indexOnly": "该数据源只允许发布与基准的差距，不允许发布具体价格",
 
   "flight.basis.cached-fare": "缓存价格",
@@ -456,7 +460,7 @@ const zh: Record<MessageKey, string> = {
     "部分维度依赖低置信度数据，总分仅供参考。",
   "warning.weatherIsClimateNormal":
     "天气使用的是历史平均值而非预报，距今这么远无法预测具体某一天。",
-  "warning.hotelIsMock": "酒店价格为合成示例数据，并非实际采集价格。",
+  "warning.hotelIsMock": "酒店价格为合成示例数据，尚未采集房价数据集。",
   "warning.flightUnavailable":
     "该日期没有可用票价，因此机票维度被排除在总分之外，而不是记为 0 分。",
   "warning.flightNotCachedFare":
@@ -467,7 +471,7 @@ const zh: Record<MessageKey, string> = {
     "假期数据未覆盖该区间的全部年份，拥挤度可能被低估。",
 
   "footer.disclaimer":
-    "原型产品，使用示例数据，尚未接入实时票价、天气与酒店数据源。",
+    "天气、假期、汇率与酒店房价在配置了数据源时均为实时数据；未配置的维度会明确标注为示例数据。",
   "footer.language": "语言",
 
   "time.justNow": "刚刚",

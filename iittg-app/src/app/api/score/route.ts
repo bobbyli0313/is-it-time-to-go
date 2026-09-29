@@ -131,7 +131,7 @@ export async function POST(request: Request): Promise<NextResponse<ScoreResponse
      */
     if (context.hotel.sampleSize === 0) {
       dataNotes.push(
-        provenance.hotel === "self-collected"
+        provenance.hotel === "collected-hotelbeds"
           ? "warning.hotelSamplesMissing"
           : "warning.hotelIsMockNoCity",
       );

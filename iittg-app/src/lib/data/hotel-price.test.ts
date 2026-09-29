@@ -87,7 +87,7 @@ describe("computeCityReferencePrice", () => {
       NOW,
     );
     expect(quote.perNightLocal).toBe(8_400);
-    expect(quote.basis).toBe("chain-direct-median");
+    expect(quote.basis).toBe("collected-median");
     expect(quote.sampleSize).toBe(9);
     expect(detail?.medianLocal).toBe(8_400);
   });
@@ -359,7 +359,7 @@ describe("fetchSelfCollectedHotelPrice", () => {
       NOW,
     );
     expect(quote.perNightLocal).toBe(8_400);
-    expect(quote.basis).toBe("chain-direct-median");
+    expect(quote.basis).toBe("collected-median");
   });
 
   it("serves a newly collected dataset immediately, not the previous one", async () => {
