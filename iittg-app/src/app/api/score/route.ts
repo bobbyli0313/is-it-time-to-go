@@ -124,8 +124,17 @@ export async function POST(request: Request): Promise<NextResponse<ScoreResponse
       dataNotes.push("warning.holidaySourceIncomplete");
     }
 
-    if (provenance.hotel === "live-amadeus" && context.hotel.sampleSize === 0) {
-      dataNotes.push("warning.hotelBasketEmpty");
+    /**
+     * Two distinct hotel problems, and they need different messages: no curated
+     * basket at all for this city, versus a basket that exists but had too few
+     * samples near the requested date.
+     */
+    if (context.hotel.sampleSize === 0) {
+      dataNotes.push(
+        provenance.hotel === "self-collected-index"
+          ? "warning.hotelSamplesMissing"
+          : "warning.hotelBasketEmpty",
+      );
     }
     if (provenance.fx === "static-reference") {
       dataNotes.push("warning.fxFromStaticTable");

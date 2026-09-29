@@ -68,8 +68,9 @@ export interface DataProvenance {
   /** Feeds the crowding dimension rather than a dimension of its own. */
   holidays: "live-nager-date" | "mock";
   fx: "live-ecb" | "static-reference" | "mock" | "not-applicable";
-  flight: "live-amadeus" | "mock";
-  hotel: "live-amadeus" | "mock";
+  flight: "live-ignav" | "mock";
+  /** Hotels are an index over samples this app collected, not a third-party feed. */
+  hotel: "self-collected-index" | "mock";
 }
 
 export interface BuiltContext {

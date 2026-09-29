@@ -5,8 +5,8 @@ a 1–100 score built from weather, hotel prices, flight prices, crowding and
 exchange rates.
 
 Three of the five dimensions run on **live data** with no API key. Flight and hotel
-pricing are wired for Amadeus and stay on sample data until credentials exist. The
-UI states, per dimension, which is which — a partially-integrated deployment must
+pricing run on Ignav (awaiting a key) and on a price index this app builds itself.
+The UI states, per dimension, which is which — a partially-integrated deployment must
 never look fully live.
 
 ## Run it
@@ -17,8 +17,7 @@ npm run dev          # http://localhost:3000
 ```
 
 No configuration is required: weather, holidays and FX are live out of the box. To
-enable flight and hotel pricing, copy `.env.example` to `.env.local` and add Amadeus
-keys.
+enable flight pricing, copy `.env.example` to `.env.local` and add an Ignav key.
 
 ```bash
 npm test             # 134 tests, offline (fixtures, no network)
@@ -34,24 +33,56 @@ npm run build        # production build
 
 | Dimension | Source | Key? | Status |
 |---|---|---|---|
-| Weather | [Open-Meteo](https://open-meteo.com) — 16-day forecast, plus a monthly climate normal beyond that | none | **live** |
-| Crowding | [Nager.Date](https://date.nager.at) — public holidays, plus a curated table of peak travel periods | none | **live** |
-| Exchange rate | [Frankfurter](https://frankfurter.dev) — ECB daily reference rates, 12-month range measured from real observations | none | **live** |
-| Flight | Amadeus `GET /v2/shopping/flight-offers` | required | adapter written, awaiting keys |
-| Hotel | Amadeus hotel offers, reduced to a price index | required | scaffold — see below |
+| Weather | [Open-Meteo](https://open-meteo.com) — 16-day forecast, monthly climate normal beyond | none | **live** |
+| Crowding | [Nager.Date](https://date.nager.at) — public holidays, plus a curated peak-period table | none | **live** |
+| Exchange rate | [Frankfurter](https://frankfurter.dev) — ECB daily reference rates, 12-month range from real observations | none | **live** |
+| Flight | [Ignav](https://ignav.com) — self-serve fare search | required | adapter written, awaiting key |
+| Hotel | **Our own price index** over samples this app collects | none | reader written, collector is a separate job |
+
+### Why not Amadeus
+
+Amadeus was the original plan for both flight and hotel pricing. Its **Self-Service
+portal was decommissioned on 17 July 2026 and its API keys were disabled**; flight
+access there now requires an enterprise sales contract. The adapter that targeted it
+was deleted rather than left waiting for credentials that can no longer be obtained.
+
+The knock-on effect is larger than one provider: flight pricing on the open market is
+now either enterprise-gated or partnership-gated, so [Ignav](https://ignav.com) —
+self-serve, 1,000 free requests then $2 per 1,000 — is the pragmatic choice.
+
+### Why hotels are our own data, not an API
+
+There is **no self-serve API for "the average nightly rate of central hotels"**. The
+OTA APIs (Booking, Expedia, Agoda) are partnership-gated, and their terms forbid
+redistributing prices regardless of access. Hotel pricing is therefore an index built
+from samples this app collects and stores itself.
+
+This is a deliberate design position rather than an unfinished integration:
+
+- **It is a relative index, never a bookable rate.** The UI says so on every card.
+  Publishing "Tokyo is 24% above its baseline" is original data; publishing "this room
+  costs ¥2,882" would be redistribution.
+- **Coverage is earned.** A city with no samples reports an unavailable dimension, not
+  an invented number.
+- **The basket is fixed per city.** An index is only comparable over time if its
+  members do not change, so samples outside the declared basket are rejected.
+- **Collection is an offline job, never a request path.** The product must not depend
+  on a live scrape to render a score. That separation is structural: the collector
+  does not live in the request-path module.
 
 ### Known limitations, disclosed in the UI
 
-- **Amadeus's free test tier has sparse city coverage.** Most China/Japan/Korea
-  routes return no offers there. The adapter treats that as a normal "no quote" and
-  excludes the dimension rather than scoring it zero.
-- **The hotel adapter has never run against a live response**, because no
-  credentials were available. Its parsing is deliberately defensive: anything that
-  does not match the documented shape yields "unavailable" rather than a
-  plausible-looking wrong number. Treat it as a scaffold needing one session against
-  real credentials. There is also no "average nightly rate for central hotels"
-  endpoint anywhere — the index must be built from a curated basket of fixed
-  property IDs, which is a data-curation task (see `MODEL.md`).
+- **Flight pricing is unverified against a live response.** The request and response
+  shapes come from Ignav's published OpenAPI document, but no fare has been observed,
+  so parsing is defensive (an unexpected shape yields "unavailable" rather than a
+  plausible-looking wrong number) and its confidence is capped at 0.55.
+- **Hotel coverage depends on collection.** A city with no basket or no samples near
+  the requested dates reports the dimension as unavailable, and the UI says which of
+  the two it is. Collection is deliberately offline: the product must not depend on a
+  live scrape to render a score.
+- **A fare quoted in a currency other than the origin's is discarded**, not converted.
+  The score compares fares against an origin-currency baseline, so a mismatched
+  currency would not be imprecise — it would be meaningless.
 - **TWD and VND are outside the ECB basket.** Rather than add an aggregator with
   unclear commercial terms, those pairs fall back to a curated static table and the
   UI says so.
@@ -77,7 +108,8 @@ browser
   └── POST /api/score          src/app/api/score/route.ts
         validates, resolves providers, scores, returns provenance
           └── lib/data          provider composition (per-dimension live | mock)
-                ├── live/       Open-Meteo · Nager.Date · Frankfurter · Amadeus
+                ├── live/       Open-Meteo · Nager.Date · Frankfurter · Ignav
+                ├── hotel-index.ts  self-collected price index (read side)
                 ├── mock-provider.ts
                 ├── http.ts     timeouts, bounded retries, IPv4 preference
                 └── cache.ts    TTL cache: memory + disk, single-flight
@@ -142,8 +174,13 @@ stop reflecting production.
 
 ## Next steps
 
-- **Amadeus credentials**, then one session against a real hotel response to make the
-  hotel adapter trustworthy. Its basket of property IDs also needs curating.
+- **An Ignav API key** (https://ignav.com/signup), then one session against a real
+  fare response: the adapter's request and response shapes come from the published
+  OpenAPI document, but no fare has been observed, so parsing is defensive and its
+  confidence is capped at 0.55 until verified.
+- **A hotel sample collector**, plus curated baskets for the launch cities. The reader
+  and the index maths are done and tested; what is missing is the offline job that
+  fills the sample file.
 - **Real fare history** for the percentile path. The scorer currently falls back to
   the distance model when no history exists, which the UI labels. Building history is
   a batch job, not a request-path concern.
