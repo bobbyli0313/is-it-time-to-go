@@ -113,11 +113,22 @@ export interface FlightQuote {
   };
   /** ISO timestamp of the cached quote. Rendered as "prices updated Xh ago". */
   fetchedAt: string;
-  /** Distance-model fallback inputs, always present so we can show the ratio. */
+  /**
+   * Distance-model inputs, always present so the ratio can be shown.
+   *
+   * The anchor is defined in USD (`miles x $0.10`), so a fare in any other currency
+   * needs converting before the two are comparable. `theoreticalLocal` carries that
+   * conversion; when it is absent no rate was available and the ratio must not be
+   * computed at all.
+   */
   distanceModel: {
     roundTripMiles: number;
     dollarsPerMile: number;
     theoreticalUsd: number;
+    /** The anchor in the origin's currency. Absent when no FX rate was obtainable. */
+    theoreticalLocal?: number;
+    /** The rate used, for disclosure. */
+    localPerUsd?: number;
   };
   confidence: number;
 }

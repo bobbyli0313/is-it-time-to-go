@@ -1,0 +1,526 @@
+{
+ "origin": "PVG",
+ "destination": "HND",
+ "departure_date": "2026-10-19",
+ "return_date": "2026-10-23",
+ "itineraries": [
+  {
+   "price": {
+    "amount": 464.0,
+    "currency": "USD",
+    "status": "verified"
+   },
+   "outbound": {
+    "carrier": "ANA",
+    "duration_minutes": 175,
+    "segments": [
+     {
+      "marketing_carrier_code": "NH",
+      "flight_number": "968",
+      "operating_carrier_name": "ANA",
+      "departure_airport": "PVG",
+      "departure_time_local": "2026-10-19T01:50:00",
+      "departure_timezone": "Asia/Shanghai",
+      "departure_time_utc": "2026-10-18T17:50:00Z",
+      "arrival_airport": "HND",
+      "arrival_time_local": "2026-10-19T05:45:00",
+      "arrival_timezone": "Asia/Tokyo",
+      "arrival_time_utc": "2026-10-18T20:45:00Z",
+      "duration_minutes": 175,
+      "aircraft": "Boeing 767"
+     }
+    ]
+   },
+   "inbound": {
+    "carrier": "ANA",
+    "duration_minutes": 875,
+    "segments": [
+     {
+      "marketing_carrier_code": "NH",
+      "flight_number": "99",
+      "operating_carrier_name": "ANA",
+      "departure_airport": "HND",
+      "departure_time_local": "2026-10-23T21:00:00",
+      "departure_timezone": "Asia/Tokyo",
+      "departure_time_utc": "2026-10-23T12:00:00Z",
+      "arrival_airport": "KIX",
+      "arrival_time_local": "2026-10-23T22:20:00",
+      "arrival_timezone": "Asia/Tokyo",
+      "arrival_time_utc": "2026-10-23T13:20:00Z",
+      "duration_minutes": 80,
+      "aircraft": "Airbus A320"
+     },
+     {
+      "marketing_carrier_code": "NH",
+      "flight_number": "973",
+      "operating_carrier_name": "ANA",
+      "departure_airport": "KIX",
+      "departure_time_local": "2026-10-24T09:00:00",
+      "departure_timezone": "Asia/Tokyo",
+      "departure_time_utc": "2026-10-24T00:00:00Z",
+      "arrival_airport": "PVG",
+      "arrival_time_local": "2026-10-24T10:35:00",
+      "arrival_timezone": "Asia/Shanghai",
+      "arrival_time_utc": "2026-10-24T02:35:00Z",
+      "duration_minutes": 155,
+      "aircraft": "Airbus A320"
+     }
+    ]
+   },
+   "cabin_class": "economy",
+   "bags": {
+    "carry_on": 1
+   },
+   "requires_self_transfer": false,
+   "ignav_id": "5b521e5dec92488cb3277c5a96e1c02c"
+  },
+  {
+   "price": {
+    "amount": 496.0,
+    "currency": "USD",
+    "status": "verified"
+   },
+   "outbound": {
+    "carrier": "Asiana Airlines",
+    "duration_minutes": 370,
+    "segments": [
+     {
+      "marketing_carrier_code": "OZ",
+      "flight_number": "366",
+      "operating_carrier_name": "Asiana Airlines",
+      "departure_airport": "PVG",
+      "departure_time_local": "2026-10-19T16:20:00",
+      "departure_timezone": "Asia/Shanghai",
+      "departure_time_utc": "2026-10-19T08:20:00Z",
+      "arrival_airport": "ICN",
+      "arrival_time_local": "2026-10-19T19:20:00",
+      "arrival_timezone": "Asia/Seoul",
+      "arrival_time_utc": "2026-10-19T10:20:00Z",
+      "duration_minutes": 120,
+      "aircraft": "Airbus A321neo"
+     },
+     {
+      "marketing_carrier_code": "OZ",
+      "flight_number": "178",
+      "operating_carrier_name": "Asiana Airlines",
+      "departure_airport": "ICN",
+      "departure_time_local": "2026-10-19T21:10:00",
+      "departure_timezone": "Asia/Seoul",
+      "departure_time_utc": "2026-10-19T12:10:00Z",
+      "arrival_airport": "HND",
+      "arrival_time_local": "2026-10-19T23:30:00",
+      "arrival_timezone": "Asia/Tokyo",
+      "arrival_time_utc": "2026-10-19T14:30:00Z",
+      "duration_minutes": 140,
+      "aircraft": "Airbus A330"
+     }
+    ]
+   },
+   "inbound": {
+    "carrier": "Asiana Airlines",
+    "duration_minutes": 575,
+    "segments": [
+     {
+      "marketing_carrier_code": "OZ",
+      "flight_number": "177",
+      "operating_carrier_name": "Asiana Airlines",
+      "departure_airport": "HND",
+      "departure_time_local": "2026-10-23T01:30:00",
+      "departure_timezone": "Asia/Tokyo",
+      "departure_time_utc": "2026-10-22T16:30:00Z",
+      "arrival_airport": "ICN",
+      "arrival_time_local": "2026-10-23T04:10:00",
+      "arrival_timezone": "Asia/Seoul",
+      "arrival_time_utc": "2026-10-22T19:10:00Z",
+      "duration_minutes": 160,
+      "aircraft": "Airbus A330"
+     },
+     {
+      "marketing_carrier_code": "OZ",
+      "flight_number": "361",
+      "operating_carrier_name": "Asiana Airlines",
+      "departure_airport": "ICN",
+      "departure_time_local": "2026-10-23T09:00:00",
+      "departure_timezone": "Asia/Seoul",
+      "departure_time_utc": "2026-10-23T00:00:00Z",
+      "arrival_airport": "PVG",
+      "arrival_time_local": "2026-10-23T10:05:00",
+      "arrival_timezone": "Asia/Shanghai",
+      "arrival_time_utc": "2026-10-23T02:05:00Z",
+      "duration_minutes": 125,
+      "aircraft": "Boeing 777"
+     }
+    ]
+   },
+   "cabin_class": "economy",
+   "bags": {
+    "carry_on": 1
+   },
+   "requires_self_transfer": false,
+   "ignav_id": "797376b235174f9bac85de2d31f0f38a"
+  },
+  {
+   "price": {
+    "amount": 501.0,
+    "currency": "USD",
+    "status": "verified"
+   },
+   "outbound": {
+    "carrier": "ANA",
+    "duration_minutes": 180,
+    "segments": [
+     {
+      "marketing_carrier_code": "NH",
+      "flight_number": "972",
+      "operating_carrier_name": "ANA",
+      "departure_airport": "PVG",
+      "departure_time_local": "2026-10-19T08:25:00",
+      "departure_timezone": "Asia/Shanghai",
+      "departure_time_utc": "2026-10-19T00:25:00Z",
+      "arrival_airport": "HND",
+      "arrival_time_local": "2026-10-19T12:25:00",
+      "arrival_timezone": "Asia/Tokyo",
+      "arrival_time_utc": "2026-10-19T03:25:00Z",
+      "duration_minutes": 180,
+      "aircraft": "Boeing 767"
+     }
+    ]
+   },
+   "inbound": {
+    "carrier": "ANA",
+    "duration_minutes": 875,
+    "segments": [
+     {
+      "marketing_carrier_code": "NH",
+      "flight_number": "99",
+      "operating_carrier_name": "ANA",
+      "departure_airport": "HND",
+      "departure_time_local": "2026-10-23T21:00:00",
+      "departure_timezone": "Asia/Tokyo",
+      "departure_time_utc": "2026-10-23T12:00:00Z",
+      "arrival_airport": "KIX",
+      "arrival_time_local": "2026-10-23T22:20:00",
+      "arrival_timezone": "Asia/Tokyo",
+      "arrival_time_utc": "2026-10-23T13:20:00Z",
+      "duration_minutes": 80,
+      "aircraft": "Airbus A320"
+     },
+     {
+      "marketing_carrier_code": "NH",
+      "flight_number": "973",
+      "operating_carrier_name": "ANA",
+      "departure_airport": "KIX",
+      "departure_time_local": "2026-10-24T09:00:00",
+      "departure_timezone": "Asia/Tokyo",
+      "departure_time_utc": "2026-10-24T00:00:00Z",
+      "arrival_airport": "PVG",
+      "arrival_time_local": "2026-10-24T10:35:00",
+      "arrival_timezone": "Asia/Shanghai",
+      "arrival_time_utc": "2026-10-24T02:35:00Z",
+      "duration_minutes": 155,
+      "aircraft": "Airbus A320"
+     }
+    ]
+   },
+   "cabin_class": "economy",
+   "bags": {
+    "carry_on": 1
+   },
+   "requires_self_transfer": false,
+   "ignav_id": "88e56e3786464bd9a9c4c4cc8c132820"
+  },
+  {
+   "price": {
+    "amount": 507.0,
+    "currency": "USD",
+    "status": "verified"
+   },
+   "outbound": {
+    "carrier": "Asiana Airlines",
+    "duration_minutes": 470,
+    "segments": [
+     {
+      "marketing_carrier_code": "OZ",
+      "flight_number": "364",
+      "operating_carrier_name": "Asiana Airlines",
+      "departure_airport": "PVG",
+      "departure_time_local": "2026-10-19T13:10:00",
+      "departure_timezone": "Asia/Shanghai",
+      "departure_time_utc": "2026-10-19T05:10:00Z",
+      "arrival_airport": "ICN",
+      "arrival_time_local": "2026-10-19T16:00:00",
+      "arrival_timezone": "Asia/Seoul",
+      "arrival_time_utc": "2026-10-19T07:00:00Z",
+      "duration_minutes": 110,
+      "aircraft": "Airbus A330"
+     },
+     {
+      "marketing_carrier_code": "OZ",
+      "flight_number": "1065",
+      "operating_carrier_name": "Asiana Airlines",
+      "departure_airport": "GMP",
+      "departure_time_local": "2026-10-19T19:50:00",
+      "departure_timezone": "Asia/Seoul",
+      "departure_time_utc": "2026-10-19T10:50:00Z",
+      "arrival_airport": "HND",
+      "arrival_time_local": "2026-10-19T22:00:00",
+      "arrival_timezone": "Asia/Tokyo",
+      "arrival_time_utc": "2026-10-19T13:00:00Z",
+      "duration_minutes": 130,
+      "aircraft": "Airbus A330"
+     }
+    ]
+   },
+   "inbound": {
+    "carrier": "Asiana Airlines",
+    "duration_minutes": 575,
+    "segments": [
+     {
+      "marketing_carrier_code": "OZ",
+      "flight_number": "177",
+      "operating_carrier_name": "Asiana Airlines",
+      "departure_airport": "HND",
+      "departure_time_local": "2026-10-23T01:30:00",
+      "departure_timezone": "Asia/Tokyo",
+      "departure_time_utc": "2026-10-22T16:30:00Z",
+      "arrival_airport": "ICN",
+      "arrival_time_local": "2026-10-23T04:10:00",
+      "arrival_timezone": "Asia/Seoul",
+      "arrival_time_utc": "2026-10-22T19:10:00Z",
+      "duration_minutes": 160,
+      "aircraft": "Airbus A330"
+     },
+     {
+      "marketing_carrier_code": "OZ",
+      "flight_number": "361",
+      "operating_carrier_name": "Asiana Airlines",
+      "departure_airport": "ICN",
+      "departure_time_local": "2026-10-23T09:00:00",
+      "departure_timezone": "Asia/Seoul",
+      "departure_time_utc": "2026-10-23T00:00:00Z",
+      "arrival_airport": "PVG",
+      "arrival_time_local": "2026-10-23T10:05:00",
+      "arrival_timezone": "Asia/Shanghai",
+      "arrival_time_utc": "2026-10-23T02:05:00Z",
+      "duration_minutes": 125,
+      "aircraft": "Boeing 777"
+     }
+    ]
+   },
+   "cabin_class": "economy",
+   "requires_self_transfer": false,
+   "ignav_id": "dd95fecb976947b6aa3d1a423fbc1963"
+  },
+  {
+   "price": {
+    "amount": 527.0,
+    "currency": "USD",
+    "status": "verified"
+   },
+   "outbound": {
+    "carrier": "ANA",
+    "duration_minutes": 175,
+    "segments": [
+     {
+      "marketing_carrier_code": "NH",
+      "flight_number": "968",
+      "operating_carrier_name": "ANA",
+      "departure_airport": "PVG",
+      "departure_time_local": "2026-10-19T01:50:00",
+      "departure_timezone": "Asia/Shanghai",
+      "departure_time_utc": "2026-10-18T17:50:00Z",
+      "arrival_airport": "HND",
+      "arrival_time_local": "2026-10-19T05:45:00",
+      "arrival_timezone": "Asia/Tokyo",
+      "arrival_time_utc": "2026-10-18T20:45:00Z",
+      "duration_minutes": 175,
+      "aircraft": "Boeing 767"
+     }
+    ]
+   },
+   "inbound": {
+    "carrier": "ANA",
+    "duration_minutes": 185,
+    "segments": [
+     {
+      "marketing_carrier_code": "NH",
+      "flight_number": "971",
+      "operating_carrier_name": "ANA",
+      "departure_airport": "HND",
+      "departure_time_local": "2026-10-23T18:35:00",
+      "departure_timezone": "Asia/Tokyo",
+      "departure_time_utc": "2026-10-23T09:35:00Z",
+      "arrival_airport": "PVG",
+      "arrival_time_local": "2026-10-23T20:40:00",
+      "arrival_timezone": "Asia/Shanghai",
+      "arrival_time_utc": "2026-10-23T12:40:00Z",
+      "duration_minutes": 185,
+      "aircraft": "Boeing 767"
+     }
+    ]
+   },
+   "cabin_class": "economy",
+   "bags": {
+    "carry_on": 1
+   },
+   "requires_self_transfer": false,
+   "ignav_id": "bce4f7d5b9514caeb2dd2a300164db87"
+  },
+  {
+   "price": {
+    "amount": 117.0,
+    "currency": "USD",
+    "status": "unverified"
+   },
+   "outbound": {
+    "carrier": "Shanghai Airlines",
+    "duration_minutes": 170,
+    "segments": [
+     {
+      "marketing_carrier_code": "FM",
+      "flight_number": "895",
+      "operating_carrier_name": "Shanghai Airlines",
+      "departure_airport": "PVG",
+      "departure_time_local": "2026-10-19T12:00:00",
+      "departure_timezone": "Asia/Shanghai",
+      "departure_time_utc": "2026-10-19T04:00:00Z",
+      "arrival_airport": "HND",
+      "arrival_time_local": "2026-10-19T15:50:00",
+      "arrival_timezone": "Asia/Tokyo",
+      "arrival_time_utc": "2026-10-19T06:50:00Z",
+      "duration_minutes": 170,
+      "aircraft": "Boeing 787"
+     }
+    ]
+   },
+   "inbound": {
+    "carrier": "Shanghai Airlines",
+    "duration_minutes": 190,
+    "segments": [
+     {
+      "marketing_carrier_code": "FM",
+      "flight_number": "896",
+      "operating_carrier_name": "Shanghai Airlines",
+      "departure_airport": "HND",
+      "departure_time_local": "2026-10-23T17:10:00",
+      "departure_timezone": "Asia/Tokyo",
+      "departure_time_utc": "2026-10-23T08:10:00Z",
+      "arrival_airport": "PVG",
+      "arrival_time_local": "2026-10-23T19:20:00",
+      "arrival_timezone": "Asia/Shanghai",
+      "arrival_time_utc": "2026-10-23T11:20:00Z",
+      "duration_minutes": 190,
+      "aircraft": "Boeing 787"
+     }
+    ]
+   },
+   "cabin_class": "economy",
+   "requires_self_transfer": false,
+   "ignav_id": "125d6a3f41f54419a75c760f2948a91c"
+  },
+  {
+   "price": {
+    "amount": 117.0,
+    "currency": "USD",
+    "status": "unverified"
+   },
+   "outbound": {
+    "carrier": "China Eastern",
+    "duration_minutes": 180,
+    "segments": [
+     {
+      "marketing_carrier_code": "MU",
+      "flight_number": "539",
+      "operating_carrier_name": "China Eastern",
+      "departure_airport": "PVG",
+      "departure_time_local": "2026-10-19T14:30:00",
+      "departure_timezone": "Asia/Shanghai",
+      "departure_time_utc": "2026-10-19T06:30:00Z",
+      "arrival_airport": "HND",
+      "arrival_time_local": "2026-10-19T18:30:00",
+      "arrival_timezone": "Asia/Tokyo",
+      "arrival_time_utc": "2026-10-19T09:30:00Z",
+      "duration_minutes": 180,
+      "aircraft": "Airbus A321"
+     }
+    ]
+   },
+   "inbound": {
+    "carrier": "Shanghai Airlines",
+    "duration_minutes": 190,
+    "segments": [
+     {
+      "marketing_carrier_code": "FM",
+      "flight_number": "896",
+      "operating_carrier_name": "Shanghai Airlines",
+      "departure_airport": "HND",
+      "departure_time_local": "2026-10-23T17:10:00",
+      "departure_timezone": "Asia/Tokyo",
+      "departure_time_utc": "2026-10-23T08:10:00Z",
+      "arrival_airport": "PVG",
+      "arrival_time_local": "2026-10-23T19:20:00",
+      "arrival_timezone": "Asia/Shanghai",
+      "arrival_time_utc": "2026-10-23T11:20:00Z",
+      "duration_minutes": 190,
+      "aircraft": "Boeing 787"
+     }
+    ]
+   },
+   "cabin_class": "economy",
+   "requires_self_transfer": false,
+   "ignav_id": "09d832452dd34a4ab2fc374a217b5fa8"
+  },
+  {
+   "price": {
+    "amount": 117.0,
+    "currency": "USD",
+    "status": "unverified"
+   },
+   "outbound": {
+    "carrier": "China Eastern",
+    "duration_minutes": 185,
+    "segments": [
+     {
+      "marketing_carrier_code": "MU",
+      "flight_number": "575",
+      "operating_carrier_name": "China Eastern",
+      "departure_airport": "PVG",
+      "departure_time_local": "2026-10-19T17:15:00",
+      "departure_timezone": "Asia/Shanghai",
+      "departure_time_utc": "2026-10-19T09:15:00Z",
+      "arrival_airport": "HND",
+      "arrival_time_local": "2026-10-19T21:20:00",
+      "arrival_timezone": "Asia/Tokyo",
+      "arrival_time_utc": "2026-10-19T12:20:00Z",
+      "duration_minutes": 185,
+      "aircraft": "Boeing 777"
+     }
+    ]
+   },
+   "inbound": {
+    "carrier": "Shanghai Airlines",
+    "duration_minutes": 190,
+    "segments": [
+     {
+      "marketing_carrier_code": "FM",
+      "flight_number": "896",
+      "operating_carrier_name": "Shanghai Airlines",
+      "departure_airport": "HND",
+      "departure_time_local": "2026-10-23T17:10:00",
+      "departure_timezone": "Asia/Tokyo",
+      "departure_time_utc": "2026-10-23T08:10:00Z",
+      "arrival_airport": "PVG",
+      "arrival_time_local": "2026-10-23T19:20:00",
+      "arrival_timezone": "Asia/Shanghai",
+      "arrival_time_utc": "2026-10-23T11:20:00Z",
+      "duration_minutes": 190,
+      "aircraft": "Boeing 787"
+     }
+    ]
+   },
+   "cabin_class": "economy",
+   "requires_self_transfer": false,
+   "ignav_id": "261a681b86644f99a0f6ba7fbac69bf2"
+  }
+ ]
+}

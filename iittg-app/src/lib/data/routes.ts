@@ -216,6 +216,12 @@ function buildRoute(originId: string, destinationId: string): RouteSpec {
     destinationCityId: destinationId,
     oneWayMiles: Math.round(oneWayMiles),
     roundTripMiles,
+    /**
+     * Airports in the *same order as the route*, origin first. The reverse direction
+     * resolves to the same route object, so an unnormalised pair would send a fare
+     * query for HND->TPE when the user asked for TPE->HND — the same price, but
+     * confusing in logs and wrong if the two directions ever price differently.
+     */
     airportPair: [origin.airports[0], destination.airports[0]],
     demandFactor: Math.round(demandFactor * 100) / 100,
     medianFareCny: Math.round(
@@ -231,19 +237,35 @@ export const ROUTES: RouteSpec[] = ROUTE_PAIRS.map(([a, b]) =>
 const ROUTE_INDEX = new Map(
   ROUTES.flatMap((r) => [
     [`${r.originCityId}->${r.destinationCityId}`, r] as const,
-    // Routes are symmetric for pricing purposes in this prototype.
     [`${r.destinationCityId}->${r.originCityId}`, r] as const,
   ]),
 );
 
+/**
+ * Looks up a route in either direction.
+ *
+ * Pricing is symmetric in this prototype, so the reverse direction returns the same
+ * route object with its airport pair *flipped to match the request*. Callers can then
+ * use `airportPair` directly as [from, to] without re-deriving the order, which is what
+ * keeps a fare query pointed at the direction the user actually asked for.
+ */
 export function findRoute(
   originCityId: string,
   destinationCityId: string,
 ): RouteSpec | undefined {
-  return (
-    ROUTE_INDEX.get(`${originCityId}->${destinationCityId}`) ??
-    ROUTE_INDEX.get(`${destinationCityId}->${originCityId}`)
-  );
+  const forward = ROUTE_INDEX.get(`${originCityId}->${destinationCityId}`);
+  if (forward) return forward;
+
+  const reverse = ROUTE_INDEX.get(`${destinationCityId}->${originCityId}`);
+  if (!reverse) return undefined;
+
+  return {
+    ...reverse,
+    id: routeId(originCityId, destinationCityId),
+    originCityId,
+    destinationCityId,
+    airportPair: [reverse.airportPair[1], reverse.airportPair[0]],
+  };
 }
 
 export function hasRoute(a: string, b: string): boolean {

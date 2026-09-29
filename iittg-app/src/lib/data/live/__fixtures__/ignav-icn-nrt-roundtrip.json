@@ -1,0 +1,326 @@
+{
+ "origin": "ICN",
+ "destination": "NRT",
+ "departure_date": "2026-10-19",
+ "return_date": "2026-10-23",
+ "itineraries": [
+  {
+   "price": {
+    "amount": 310522.0,
+    "currency": "KRW",
+    "status": "verified"
+   },
+   "outbound": {
+    "carrier": "진에어",
+    "duration_minutes": 150,
+    "segments": [
+     {
+      "marketing_carrier_code": "LJ",
+      "flight_number": "201",
+      "operating_carrier_name": "진에어",
+      "departure_airport": "ICN",
+      "departure_time_local": "2026-10-19T07:25:00",
+      "departure_timezone": "Asia/Seoul",
+      "departure_time_utc": "2026-10-18T22:25:00Z",
+      "arrival_airport": "NRT",
+      "arrival_time_local": "2026-10-19T09:55:00",
+      "arrival_timezone": "Asia/Tokyo",
+      "arrival_time_utc": "2026-10-19T00:55:00Z",
+      "duration_minutes": 150,
+      "aircraft": "Boeing 737"
+     }
+    ]
+   },
+   "inbound": {
+    "carrier": "에티오피아항공",
+    "duration_minutes": 145,
+    "segments": [
+     {
+      "marketing_carrier_code": "ET",
+      "flight_number": "673",
+      "operating_carrier_name": "에티오피아항공",
+      "departure_airport": "NRT",
+      "departure_time_local": "2026-10-23T20:40:00",
+      "departure_timezone": "Asia/Tokyo",
+      "departure_time_utc": "2026-10-23T11:40:00Z",
+      "arrival_airport": "ICN",
+      "arrival_time_local": "2026-10-23T23:05:00",
+      "arrival_timezone": "Asia/Seoul",
+      "arrival_time_utc": "2026-10-23T14:05:00Z",
+      "duration_minutes": 145,
+      "aircraft": "Airbus A350"
+     }
+    ]
+   },
+   "cabin_class": "economy",
+   "requires_self_transfer": false,
+   "ignav_id": "411c11b107fb451d96d47e90aaa2230d"
+  },
+  {
+   "price": {
+    "amount": 310522.0,
+    "currency": "KRW",
+    "status": "verified"
+   },
+   "outbound": {
+    "carrier": "진에어",
+    "duration_minutes": 160,
+    "segments": [
+     {
+      "marketing_carrier_code": "LJ",
+      "flight_number": "203",
+      "operating_carrier_name": "진에어",
+      "departure_airport": "ICN",
+      "departure_time_local": "2026-10-19T07:55:00",
+      "departure_timezone": "Asia/Seoul",
+      "departure_time_utc": "2026-10-18T22:55:00Z",
+      "arrival_airport": "NRT",
+      "arrival_time_local": "2026-10-19T10:35:00",
+      "arrival_timezone": "Asia/Tokyo",
+      "arrival_time_utc": "2026-10-19T01:35:00Z",
+      "duration_minutes": 160,
+      "aircraft": "Boeing 777"
+     }
+    ]
+   },
+   "inbound": {
+    "carrier": "에티오피아항공",
+    "duration_minutes": 145,
+    "segments": [
+     {
+      "marketing_carrier_code": "ET",
+      "flight_number": "673",
+      "operating_carrier_name": "에티오피아항공",
+      "departure_airport": "NRT",
+      "departure_time_local": "2026-10-23T20:40:00",
+      "departure_timezone": "Asia/Tokyo",
+      "departure_time_utc": "2026-10-23T11:40:00Z",
+      "arrival_airport": "ICN",
+      "arrival_time_local": "2026-10-23T23:05:00",
+      "arrival_timezone": "Asia/Seoul",
+      "arrival_time_utc": "2026-10-23T14:05:00Z",
+      "duration_minutes": 145,
+      "aircraft": "Airbus A350"
+     }
+    ]
+   },
+   "cabin_class": "economy",
+   "requires_self_transfer": false,
+   "ignav_id": "c6f83796937a46f9b4553a8ce059af2e"
+  },
+  {
+   "price": {
+    "amount": 321122.0,
+    "currency": "KRW",
+    "status": "verified"
+   },
+   "outbound": {
+    "carrier": "에어서울",
+    "duration_minutes": 150,
+    "segments": [
+     {
+      "marketing_carrier_code": "RS",
+      "flight_number": "705",
+      "operating_carrier_name": "에어서울",
+      "departure_airport": "ICN",
+      "departure_time_local": "2026-10-19T08:10:00",
+      "departure_timezone": "Asia/Seoul",
+      "departure_time_utc": "2026-10-18T23:10:00Z",
+      "arrival_airport": "NRT",
+      "arrival_time_local": "2026-10-19T10:40:00",
+      "arrival_timezone": "Asia/Tokyo",
+      "arrival_time_utc": "2026-10-19T01:40:00Z",
+      "duration_minutes": 150,
+      "aircraft": "Airbus A321"
+     }
+    ]
+   },
+   "inbound": {
+    "carrier": "에티오피아항공",
+    "duration_minutes": 145,
+    "segments": [
+     {
+      "marketing_carrier_code": "ET",
+      "flight_number": "673",
+      "operating_carrier_name": "에티오피아항공",
+      "departure_airport": "NRT",
+      "departure_time_local": "2026-10-23T20:40:00",
+      "departure_timezone": "Asia/Tokyo",
+      "departure_time_utc": "2026-10-23T11:40:00Z",
+      "arrival_airport": "ICN",
+      "arrival_time_local": "2026-10-23T23:05:00",
+      "arrival_timezone": "Asia/Seoul",
+      "arrival_time_utc": "2026-10-23T14:05:00Z",
+      "duration_minutes": 145,
+      "aircraft": "Airbus A350"
+     }
+    ]
+   },
+   "cabin_class": "economy",
+   "bags": {
+    "carry_on": 1
+   },
+   "requires_self_transfer": false,
+   "ignav_id": "12b7412cf61d45b5b20276db7149534d"
+  },
+  {
+   "price": {
+    "amount": 326450.0,
+    "currency": "KRW",
+    "status": "verified"
+   },
+   "outbound": {
+    "carrier": "진에어",
+    "duration_minutes": 150,
+    "segments": [
+     {
+      "marketing_carrier_code": "LJ",
+      "flight_number": "201",
+      "operating_carrier_name": "진에어",
+      "departure_airport": "ICN",
+      "departure_time_local": "2026-10-19T07:25:00",
+      "departure_timezone": "Asia/Seoul",
+      "departure_time_utc": "2026-10-18T22:25:00Z",
+      "arrival_airport": "NRT",
+      "arrival_time_local": "2026-10-19T09:55:00",
+      "arrival_timezone": "Asia/Tokyo",
+      "arrival_time_utc": "2026-10-19T00:55:00Z",
+      "duration_minutes": 150,
+      "aircraft": "Boeing 737"
+     }
+    ]
+   },
+   "inbound": {
+    "carrier": "에어서울",
+    "duration_minutes": 160,
+    "segments": [
+     {
+      "marketing_carrier_code": "RS",
+      "flight_number": "704",
+      "operating_carrier_name": "에어서울",
+      "departure_airport": "NRT",
+      "departure_time_local": "2026-10-23T20:10:00",
+      "departure_timezone": "Asia/Tokyo",
+      "departure_time_utc": "2026-10-23T11:10:00Z",
+      "arrival_airport": "ICN",
+      "arrival_time_local": "2026-10-23T22:50:00",
+      "arrival_timezone": "Asia/Seoul",
+      "arrival_time_utc": "2026-10-23T13:50:00Z",
+      "duration_minutes": 160,
+      "aircraft": "Airbus A321"
+     }
+    ]
+   },
+   "cabin_class": "economy",
+   "requires_self_transfer": false,
+   "ignav_id": "2583fe1f7153487db168ed240c28cefa"
+  },
+  {
+   "price": {
+    "amount": 326450.0,
+    "currency": "KRW",
+    "status": "verified"
+   },
+   "outbound": {
+    "carrier": "진에어",
+    "duration_minutes": 160,
+    "segments": [
+     {
+      "marketing_carrier_code": "LJ",
+      "flight_number": "203",
+      "operating_carrier_name": "진에어",
+      "departure_airport": "ICN",
+      "departure_time_local": "2026-10-19T07:55:00",
+      "departure_timezone": "Asia/Seoul",
+      "departure_time_utc": "2026-10-18T22:55:00Z",
+      "arrival_airport": "NRT",
+      "arrival_time_local": "2026-10-19T10:35:00",
+      "arrival_timezone": "Asia/Tokyo",
+      "arrival_time_utc": "2026-10-19T01:35:00Z",
+      "duration_minutes": 160,
+      "aircraft": "Boeing 777"
+     }
+    ]
+   },
+   "inbound": {
+    "carrier": "에어서울",
+    "duration_minutes": 160,
+    "segments": [
+     {
+      "marketing_carrier_code": "RS",
+      "flight_number": "704",
+      "operating_carrier_name": "에어서울",
+      "departure_airport": "NRT",
+      "departure_time_local": "2026-10-23T20:10:00",
+      "departure_timezone": "Asia/Tokyo",
+      "departure_time_utc": "2026-10-23T11:10:00Z",
+      "arrival_airport": "ICN",
+      "arrival_time_local": "2026-10-23T22:50:00",
+      "arrival_timezone": "Asia/Seoul",
+      "arrival_time_utc": "2026-10-23T13:50:00Z",
+      "duration_minutes": 160,
+      "aircraft": "Airbus A321"
+     }
+    ]
+   },
+   "cabin_class": "economy",
+   "requires_self_transfer": false,
+   "ignav_id": "ee1de9b54b3f48db82253f02e255542b"
+  },
+  {
+   "price": {
+    "amount": 333022.0,
+    "currency": "KRW",
+    "status": "verified"
+   },
+   "outbound": {
+    "carrier": "ZIPAIR Tokyo",
+    "duration_minutes": 155,
+    "segments": [
+     {
+      "marketing_carrier_code": "ZG",
+      "flight_number": "46",
+      "operating_carrier_name": "ZIPAIR Tokyo",
+      "departure_airport": "ICN",
+      "departure_time_local": "2026-10-19T12:55:00",
+      "departure_timezone": "Asia/Seoul",
+      "departure_time_utc": "2026-10-19T03:55:00Z",
+      "arrival_airport": "NRT",
+      "arrival_time_local": "2026-10-19T15:30:00",
+      "arrival_timezone": "Asia/Tokyo",
+      "arrival_time_utc": "2026-10-19T06:30:00Z",
+      "duration_minutes": 155,
+      "aircraft": "Boeing 787"
+     }
+    ]
+   },
+   "inbound": {
+    "carrier": "에티오피아항공",
+    "duration_minutes": 145,
+    "segments": [
+     {
+      "marketing_carrier_code": "ET",
+      "flight_number": "673",
+      "operating_carrier_name": "에티오피아항공",
+      "departure_airport": "NRT",
+      "departure_time_local": "2026-10-23T20:40:00",
+      "departure_timezone": "Asia/Tokyo",
+      "departure_time_utc": "2026-10-23T11:40:00Z",
+      "arrival_airport": "ICN",
+      "arrival_time_local": "2026-10-23T23:05:00",
+      "arrival_timezone": "Asia/Seoul",
+      "arrival_time_utc": "2026-10-23T14:05:00Z",
+      "duration_minutes": 145,
+      "aircraft": "Airbus A350"
+     }
+    ]
+   },
+   "cabin_class": "economy",
+   "bags": {
+    "carry_on": 1
+   },
+   "requires_self_transfer": false,
+   "ignav_id": "a71aa02de7314d0498f311bfa470ebe8"
+  }
+ ]
+}

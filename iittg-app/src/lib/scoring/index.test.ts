@@ -299,6 +299,12 @@ describe("scoreFlight", () => {
       roundTripMiles: 2164,
       dollarsPerMile: 0.1,
       theoreticalUsd: 216.4,
+      /**
+       * The anchor in the fare's own currency. Required, and required to be in the
+       * *same* unit as `fareLocal`: dividing a CNY fare by a USD anchor is the bug this
+       * field exists to prevent. Kept at the USD figure here so the ratio stays 2.93.
+       */
+      theoreticalLocal: 216.4,
     },
   };
 
@@ -346,7 +352,13 @@ describe("scoreFlight", () => {
       quote: {
         ...baseQuote,
         fareLocal: 200,
-        distanceModel: { roundTripMiles: 600, dollarsPerMile: 0.1, theoreticalUsd: 60 },
+        distanceModel: {
+          roundTripMiles: 600,
+          dollarsPerMile: 0.1,
+          theoreticalUsd: 60,
+          theoreticalLocal: 60,
+          localPerUsd: 7.1,
+        },
         history: { lookbackDays: 90, min: 150, max: 400, median: 250, percentile: 50 },
       },
     });
@@ -355,7 +367,13 @@ describe("scoreFlight", () => {
       quote: {
         ...baseQuote,
         fareLocal: 1200,
-        distanceModel: { roundTripMiles: 6000, dollarsPerMile: 0.1, theoreticalUsd: 600 },
+        distanceModel: {
+          roundTripMiles: 6000,
+          dollarsPerMile: 0.1,
+          theoreticalUsd: 600,
+          theoreticalLocal: 600,
+          localPerUsd: 7.1,
+        },
         history: { lookbackDays: 90, min: 900, max: 2400, median: 1500, percentile: 50 },
       },
     });
@@ -365,7 +383,56 @@ describe("scoreFlight", () => {
   it("keeps the distance model as a disclosed cross-check on every quote", () => {
     const s = scoreFlight({ kind: "quote", quote: baseQuote });
     expect(s.facts.theoreticalUsd).toBe(216.4);
+    expect(s.facts.theoreticalLocal).toBe(216.4);
     expect(s.facts.fareToTheoreticalRatio).toBeCloseTo(2.93, 2);
+  });
+
+  /**
+   * The unit contract. The distance anchor is defined in USD, so a fare in another
+   * currency must be divided by the *converted* anchor. Without it, a CNY fare of 3,009
+   * over a USD anchor of 218 scored as 13.8x when the real ratio was about 2x — a wrong
+   * number presented with full confidence.
+   */
+  it("uses the converted anchor for the ratio, not the USD one", () => {
+    const s = scoreFlight({
+      kind: "quote",
+      quote: {
+        ...baseQuote,
+        fareLocal: 3009,
+        distanceModel: {
+          roundTripMiles: 2164,
+          dollarsPerMile: 0.1,
+          theoreticalUsd: 216.4,
+          theoreticalLocal: 1536.4, // 216.4 USD at 7.1 CNY/USD
+          localPerUsd: 7.1,
+        },
+      },
+    });
+    // 3009 / 1536.4 = 1.96, not 3009 / 216.4 = 13.9.
+    expect(s.facts.fareToTheoreticalRatio).toBeCloseTo(1.96, 2);
+  });
+
+  /**
+   * When no rate is available the comparison cannot be made at all, so the dimension is
+   * excluded rather than scored against the wrong unit.
+   */
+  it("excludes the dimension when no anchor conversion was possible", () => {
+    const s = scoreFlight({
+      kind: "quote",
+      quote: {
+        ...baseQuote,
+        distanceModel: {
+          roundTripMiles: 2164,
+          dollarsPerMile: 0.1,
+          theoreticalUsd: 216.4,
+          // No theoreticalLocal: the adapter could not obtain a rate.
+        },
+      },
+    });
+    expect(s.score).toBeNull();
+    expect(s.applicable).toBe(false);
+    expect(s.drivers).toContain("flight.driver.noFxForAnchor");
+    expect(s.facts.fareToTheoreticalRatio).toBeUndefined();
   });
 
   /**
@@ -639,6 +706,8 @@ describe("scoreTrip", () => {
           roundTripMiles: 2164,
           dollarsPerMile: 0.1,
           theoreticalUsd: 216.4,
+          theoreticalLocal: 216.4,
+          localPerUsd: 7.1,
         },
       },
     } as const,

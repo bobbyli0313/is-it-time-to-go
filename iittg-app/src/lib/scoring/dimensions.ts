@@ -371,9 +371,37 @@ export function scoreFlight(input: FlightScorerInput): DimensionScore {
     else if (rank >= 75) drivers.push("flight.driver.expensiveVsHistory");
     else drivers.push("flight.driver.typicalVsHistory");
   } else {
-    // Distance-model fallback: the spec's `miles × $0.10` anchor.
-    const ratio =
-      quote.fareLocal / (quote.distanceModel.theoreticalUsd || 1);
+    /**
+     * Distance-model fallback: the brief's `miles x $0.10` anchor.
+     *
+     * The anchor is denominated in USD, so it must be converted into the fare's own
+     * currency before the two are divided. An earlier version compared them directly,
+     * which scored a CNY fare of 3,009 against a USD anchor of 218 as 13.8x the
+     * theoretical price on a route whose real ratio was about 2x — a wrong number,
+     * presented with full confidence.
+     *
+     * When no rate is available `theoreticalLocal` is absent and the ratio is not
+     * computed at all: the dimension is excluded rather than scored against the wrong
+     * unit.
+     */
+    const anchor = quote.distanceModel.theoreticalLocal;
+    if (anchor === undefined || anchor <= 0) {
+      return {
+        key: "flight",
+        score: null,
+        applicable: false,
+        confidence: "low",
+        weight: PARAMS.total.weights.flight,
+        facts: {
+          basis: quote.basis,
+          unavailable: "no-fx-for-anchor",
+          theoreticalUsd: round1(quote.distanceModel.theoreticalUsd),
+        },
+        drivers: ["flight.driver.noFxForAnchor"],
+      };
+    }
+
+    const ratio = quote.fareLocal / anchor;
     const excess = Math.max(0, ratio - p.distanceRatioThreshold);
     score = round1(
       clamp(
@@ -410,10 +438,15 @@ export function scoreFlight(input: FlightScorerInput): DimensionScore {
       fetchedAt: quote.fetchedAt,
       ageHours: Math.round(ageHours * 10) / 10,
       theoreticalUsd: round1(quote.distanceModel.theoreticalUsd),
-      fareToTheoreticalRatio:
-        Math.round(
-          (quote.fareLocal / (quote.distanceModel.theoreticalUsd || 1)) * 100,
-        ) / 100,
+      ...(quote.distanceModel.theoreticalLocal !== undefined
+        ? {
+            theoreticalLocal: round1(quote.distanceModel.theoreticalLocal),
+            fareToTheoreticalRatio:
+              Math.round(
+                (quote.fareLocal / quote.distanceModel.theoreticalLocal) * 100,
+              ) / 100,
+          }
+        : {}),
       ...(history
         ? {
             historyMin: Math.round(history.min),

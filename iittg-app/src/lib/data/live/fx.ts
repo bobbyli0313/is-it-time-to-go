@@ -213,6 +213,56 @@ export async function fetchLiveFx(
 /** Exported for tests. */
 export const internals = {
   staticReference,
+  usdRateTo,
   round6,
   isoDaysAgo,
 };
+
+/**
+ * USD -> `to` rate, for unit conversion rather than scoring.
+ *
+ * The distance model's anchor is denominated in USD (`miles x $0.10`), so any fare in
+ * another currency has to be converted before the two can be compared. This was a real
+ * bug: a CNY fare of 3,009 was divided by a USD anchor of 218 and scored as though the
+ * route cost 13.8x the theoretical price, when the true ratio was about 2x.
+ *
+ * Returns `null` when the pair is not serviceable, so the caller can decline to score
+ * rather than invent a rate.
+ */
+export async function usdRateTo(
+  to: string,
+  now: Date = new Date(),
+): Promise<number | null> {
+  if (to === "USD") return 1;
+
+  /**
+   * Currencies outside the ECB basket (TWD, VND) fall back to the curated table, for
+   * consistency with the FX *dimension*, which already scores those pairs from the same
+   * table and discloses it. Without this the two disagreed: a TWD trip got a scoring
+   * exchange rate but no anchor conversion, so its flight dimension was excluded for a
+   * reason the user could not see.
+   */
+  if (!ECB_CURRENCIES.has(to)) {
+    const ref = FX_VS_CNY[to];
+    if (!ref || ref.cnyToQuote <= 0) return null;
+    const usdRef = FX_VS_CNY.USD;
+    if (!usdRef || usdRef.cnyToQuote <= 0) return null;
+    // CNY per unit of `to`, divided by CNY per USD.
+    return ref.cnyToQuote / usdRef.cnyToQuote;
+  }
+
+  try {
+    // Longer TTL than the scoring path: a unit conversion does not need same-day
+    // precision, and this keeps the conversion off the critical path after the first
+    // call for a currency.
+    const series = await remember(
+      `fx:usd-rate:${to}:${now.toISOString().slice(0, 10)}`,
+      () => fetchYearSeries("USD", to, now),
+      { ttlMs: TTL.fxYearRange, staleOnError: true },
+    );
+    const latest = series.points[series.points.length - 1];
+    return Number.isFinite(latest?.rate) && latest.rate > 0 ? latest.rate : null;
+  } catch {
+    return null;
+  }
+}

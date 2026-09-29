@@ -56,6 +56,12 @@ export const MOCK_SETTINGS = {
   hotelSampleSize: 18,
 } as const;
 
+/**
+ * Mock CNY per USD, used only to express the USD distance anchor in the mock fares'
+ * own currency. The live path converts with a real rate instead.
+ */
+const CNY_PER_USD = 7.1;
+
 /** Simulated latency, so loading states are exercised during development. */
 const latency = () => new Promise((r) => setTimeout(r, 0));
 
@@ -335,6 +341,14 @@ export async function fetchMockFlightQuote(
       roundTripMiles: route.roundTripMiles,
       dollarsPerMile: 0.1,
       theoreticalUsd: Math.round(theoreticalUsd * 10) / 10,
+      /**
+       * The mock fares are already in the origin's currency (CNY), so the USD anchor is
+       * scaled by the mock CNY-per-USD level. Without this the mock path would divide a
+       * CNY fare by a USD anchor — the same unit bug the live path had.
+       */
+      theoreticalLocal:
+        Math.round(theoreticalUsd * CNY_PER_USD * 10) / 10,
+      localPerUsd: CNY_PER_USD,
     },
   };
 }

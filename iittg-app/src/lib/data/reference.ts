@@ -205,6 +205,14 @@ export interface FxPairReference {
  */
 export const FX_VS_CNY: Record<string, FxPairReference> = {
   CNY: { cnyToQuote: 1, yearLow: 1, yearHigh: 1 },
+  /**
+   * USD is here because the flight distance model's anchor is denominated in USD
+   * (`miles x $0.10`), so converting that anchor into a currency the ECB does not
+   * publish — TWD, say — needs a USD leg. Its absence made every TWD-origin flight
+   * dimension silently unavailable, because the fallback returned null when its own
+   * dependency was missing.
+   */
+  USD: { cnyToQuote: 0.1408, yearLow: 0.1371, yearHigh: 0.1492 },
   HKD: { cnyToQuote: 1.1, yearLow: 1.062, yearHigh: 1.121 },
   JPY: { cnyToQuote: 23.51, yearLow: 17.5, yearHigh: 24.2 },
   KRW: { cnyToQuote: 197.5, yearLow: 168.0, yearHigh: 205.0 },

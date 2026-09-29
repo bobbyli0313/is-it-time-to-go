@@ -33,3 +33,7 @@ FEASIBILITY.md
 *.swp
 npm-debug.log*
 yarn-error.log*
+
+# npm notifier artefacts, emitted when the cache dir is set to a local path
+_logs/
+_update-notifier-last-checked

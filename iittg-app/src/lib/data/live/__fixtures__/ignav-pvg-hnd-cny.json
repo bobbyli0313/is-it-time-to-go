@@ -1,0 +1,331 @@
+{
+ "origin": "PVG",
+ "destination": "HND",
+ "departure_date": "2026-10-20",
+ "return_date": "2026-10-24",
+ "itineraries": [
+  {
+   "price": {
+    "amount": 3009.0,
+    "currency": "CNY",
+    "status": "verified"
+   },
+   "outbound": {
+    "carrier": "乐桃航空",
+    "duration_minutes": 175,
+    "segments": [
+     {
+      "marketing_carrier_code": "MM",
+      "flight_number": "876",
+      "operating_carrier_name": "乐桃航空",
+      "departure_airport": "PVG",
+      "departure_time_local": "2026-10-20T01:05:00",
+      "departure_timezone": "Asia/Shanghai",
+      "departure_time_utc": "2026-10-19T17:05:00Z",
+      "arrival_airport": "HND",
+      "arrival_time_local": "2026-10-20T05:00:00",
+      "arrival_timezone": "Asia/Tokyo",
+      "arrival_time_utc": "2026-10-19T20:00:00Z",
+      "duration_minutes": 175,
+      "aircraft": "Airbus A320neo"
+     }
+    ]
+   },
+   "inbound": {
+    "carrier": "春航",
+    "duration_minutes": 205,
+    "segments": [
+     {
+      "marketing_carrier_code": "9C",
+      "flight_number": "8516",
+      "operating_carrier_name": "春航",
+      "departure_airport": "HND",
+      "departure_time_local": "2026-10-24T01:05:00",
+      "departure_timezone": "Asia/Tokyo",
+      "departure_time_utc": "2026-10-23T16:05:00Z",
+      "arrival_airport": "PVG",
+      "arrival_time_local": "2026-10-24T03:30:00",
+      "arrival_timezone": "Asia/Shanghai",
+      "arrival_time_utc": "2026-10-23T19:30:00Z",
+      "duration_minutes": 205,
+      "aircraft": "Airbus A320"
+     }
+    ]
+   },
+   "cabin_class": "economy",
+   "requires_self_transfer": false,
+   "ignav_id": "3ccc19a659214bbe9ce29b557deb5fdb"
+  },
+  {
+   "price": {
+    "amount": 3138.0,
+    "currency": "CNY",
+    "status": "verified"
+   },
+   "outbound": {
+    "carrier": "南航",
+    "duration_minutes": 720,
+    "segments": [
+     {
+      "marketing_carrier_code": "CZ",
+      "flight_number": "3549",
+      "operating_carrier_name": "南航",
+      "departure_airport": "PVG",
+      "departure_time_local": "2026-10-20T06:55:00",
+      "departure_timezone": "Asia/Shanghai",
+      "departure_time_utc": "2026-10-19T22:55:00Z",
+      "arrival_airport": "CAN",
+      "arrival_time_local": "2026-10-20T09:15:00",
+      "arrival_timezone": "Asia/Shanghai",
+      "arrival_time_utc": "2026-10-20T01:15:00Z",
+      "duration_minutes": 140,
+      "aircraft": "Airbus A321"
+     },
+     {
+      "marketing_carrier_code": "CZ",
+      "flight_number": "3085",
+      "operating_carrier_name": "南航",
+      "departure_airport": "CAN",
+      "departure_time_local": "2026-10-20T14:45:00",
+      "departure_timezone": "Asia/Shanghai",
+      "departure_time_utc": "2026-10-20T06:45:00Z",
+      "arrival_airport": "HND",
+      "arrival_time_local": "2026-10-20T19:55:00",
+      "arrival_timezone": "Asia/Tokyo",
+      "arrival_time_utc": "2026-10-20T10:55:00Z",
+      "duration_minutes": 250,
+      "aircraft": "Airbus A321neo"
+     }
+    ]
+   },
+   "inbound": {
+    "carrier": "南航",
+    "duration_minutes": 875,
+    "segments": [
+     {
+      "marketing_carrier_code": "CZ",
+      "flight_number": "3086",
+      "operating_carrier_name": "南航",
+      "departure_airport": "HND",
+      "departure_time_local": "2026-10-24T10:45:00",
+      "departure_timezone": "Asia/Tokyo",
+      "departure_time_utc": "2026-10-24T01:45:00Z",
+      "arrival_airport": "CAN",
+      "arrival_time_local": "2026-10-24T14:30:00",
+      "arrival_timezone": "Asia/Shanghai",
+      "arrival_time_utc": "2026-10-24T06:30:00Z",
+      "duration_minutes": 285,
+      "aircraft": "Airbus A321neo"
+     },
+     {
+      "marketing_carrier_code": "CZ",
+      "flight_number": "3586",
+      "operating_carrier_name": "南航",
+      "departure_airport": "CAN",
+      "departure_time_local": "2026-10-24T22:00:00",
+      "departure_timezone": "Asia/Shanghai",
+      "departure_time_utc": "2026-10-24T14:00:00Z",
+      "arrival_airport": "PVG",
+      "arrival_time_local": "2026-10-25T00:20:00",
+      "arrival_timezone": "Asia/Shanghai",
+      "arrival_time_utc": "2026-10-24T16:20:00Z",
+      "duration_minutes": 140,
+      "aircraft": "Airbus A321neo"
+     }
+    ]
+   },
+   "cabin_class": "economy",
+   "requires_self_transfer": false,
+   "ignav_id": "f7747ed78a9e4b7e9047801f02aad586"
+  },
+  {
+   "price": {
+    "amount": 3205.0,
+    "currency": "CNY",
+    "status": "verified"
+   },
+   "outbound": {
+    "carrier": "乐桃航空",
+    "duration_minutes": 175,
+    "segments": [
+     {
+      "marketing_carrier_code": "MM",
+      "flight_number": "876",
+      "operating_carrier_name": "乐桃航空",
+      "departure_airport": "PVG",
+      "departure_time_local": "2026-10-20T01:05:00",
+      "departure_timezone": "Asia/Shanghai",
+      "departure_time_utc": "2026-10-19T17:05:00Z",
+      "arrival_airport": "HND",
+      "arrival_time_local": "2026-10-20T05:00:00",
+      "arrival_timezone": "Asia/Tokyo",
+      "arrival_time_utc": "2026-10-19T20:00:00Z",
+      "duration_minutes": 175,
+      "aircraft": "Airbus A320neo"
+     }
+    ]
+   },
+   "inbound": {
+    "carrier": "乐桃航空",
+    "duration_minutes": 200,
+    "segments": [
+     {
+      "marketing_carrier_code": "MM",
+      "flight_number": "877",
+      "operating_carrier_name": "乐桃航空",
+      "departure_airport": "HND",
+      "departure_time_local": "2026-10-24T02:40:00",
+      "departure_timezone": "Asia/Tokyo",
+      "departure_time_utc": "2026-10-23T17:40:00Z",
+      "arrival_airport": "PVG",
+      "arrival_time_local": "2026-10-24T05:00:00",
+      "arrival_timezone": "Asia/Shanghai",
+      "arrival_time_utc": "2026-10-23T21:00:00Z",
+      "duration_minutes": 200,
+      "aircraft": "Airbus A320neo"
+     }
+    ]
+   },
+   "cabin_class": "economy",
+   "requires_self_transfer": false,
+   "ignav_id": "768ec84816894dae861daa0514a0c418"
+  },
+  {
+   "price": {
+    "amount": 3282.0,
+    "currency": "CNY",
+    "status": "verified"
+   },
+   "outbound": {
+    "carrier": "全日空",
+    "duration_minutes": 175,
+    "segments": [
+     {
+      "marketing_carrier_code": "NH",
+      "flight_number": "968",
+      "operating_carrier_name": "全日空",
+      "departure_airport": "PVG",
+      "departure_time_local": "2026-10-20T01:50:00",
+      "departure_timezone": "Asia/Shanghai",
+      "departure_time_utc": "2026-10-19T17:50:00Z",
+      "arrival_airport": "HND",
+      "arrival_time_local": "2026-10-20T05:45:00",
+      "arrival_timezone": "Asia/Tokyo",
+      "arrival_time_utc": "2026-10-19T20:45:00Z",
+      "duration_minutes": 175,
+      "aircraft": "Boeing 767"
+     }
+    ]
+   },
+   "inbound": {
+    "carrier": "全日空",
+    "duration_minutes": 195,
+    "segments": [
+     {
+      "marketing_carrier_code": "NH",
+      "flight_number": "967",
+      "operating_carrier_name": "全日空",
+      "departure_airport": "HND",
+      "departure_time_local": "2026-10-24T22:30:00",
+      "departure_timezone": "Asia/Tokyo",
+      "departure_time_utc": "2026-10-24T13:30:00Z",
+      "arrival_airport": "PVG",
+      "arrival_time_local": "2026-10-25T00:45:00",
+      "arrival_timezone": "Asia/Shanghai",
+      "arrival_time_utc": "2026-10-24T16:45:00Z",
+      "duration_minutes": 195,
+      "aircraft": "Boeing 767"
+     }
+    ]
+   },
+   "cabin_class": "economy",
+   "bags": {
+    "carry_on": 1
+   },
+   "requires_self_transfer": false,
+   "ignav_id": "cd3ccd903e4b42c6890a63a6a97fc5af"
+  },
+  {
+   "price": {
+    "amount": 3328.0,
+    "currency": "CNY",
+    "status": "verified"
+   },
+   "outbound": {
+    "carrier": "韩亚",
+    "duration_minutes": 370,
+    "segments": [
+     {
+      "marketing_carrier_code": "OZ",
+      "flight_number": "366",
+      "operating_carrier_name": "韩亚",
+      "departure_airport": "PVG",
+      "departure_time_local": "2026-10-20T16:20:00",
+      "departure_timezone": "Asia/Shanghai",
+      "departure_time_utc": "2026-10-20T08:20:00Z",
+      "arrival_airport": "ICN",
+      "arrival_time_local": "2026-10-20T19:20:00",
+      "arrival_timezone": "Asia/Seoul",
+      "arrival_time_utc": "2026-10-20T10:20:00Z",
+      "duration_minutes": 120,
+      "aircraft": "Airbus A321neo"
+     },
+     {
+      "marketing_carrier_code": "OZ",
+      "flight_number": "178",
+      "operating_carrier_name": "韩亚",
+      "departure_airport": "ICN",
+      "departure_time_local": "2026-10-20T21:10:00",
+      "departure_timezone": "Asia/Seoul",
+      "departure_time_utc": "2026-10-20T12:10:00Z",
+      "arrival_airport": "HND",
+      "arrival_time_local": "2026-10-20T23:30:00",
+      "arrival_timezone": "Asia/Tokyo",
+      "arrival_time_utc": "2026-10-20T14:30:00Z",
+      "duration_minutes": 140,
+      "aircraft": "Airbus A330"
+     }
+    ]
+   },
+   "inbound": {
+    "carrier": "韩亚",
+    "duration_minutes": 575,
+    "segments": [
+     {
+      "marketing_carrier_code": "OZ",
+      "flight_number": "177",
+      "operating_carrier_name": "韩亚",
+      "departure_airport": "HND",
+      "departure_time_local": "2026-10-24T01:30:00",
+      "departure_timezone": "Asia/Tokyo",
+      "departure_time_utc": "2026-10-23T16:30:00Z",
+      "arrival_airport": "ICN",
+      "arrival_time_local": "2026-10-24T04:10:00",
+      "arrival_timezone": "Asia/Seoul",
+      "arrival_time_utc": "2026-10-23T19:10:00Z",
+      "duration_minutes": 160,
+      "aircraft": "Airbus A330"
+     },
+     {
+      "marketing_carrier_code": "OZ",
+      "flight_number": "361",
+      "operating_carrier_name": "韩亚",
+      "departure_airport": "ICN",
+      "departure_time_local": "2026-10-24T09:00:00",
+      "departure_timezone": "Asia/Seoul",
+      "departure_time_utc": "2026-10-24T00:00:00Z",
+      "arrival_airport": "PVG",
+      "arrival_time_local": "2026-10-24T10:05:00",
+      "arrival_timezone": "Asia/Shanghai",
+      "arrival_time_utc": "2026-10-24T02:05:00Z",
+      "duration_minutes": 125,
+      "aircraft": "Airbus A330"
+     }
+    ]
+   },
+   "cabin_class": "economy",
+   "requires_self_transfer": false,
+   "ignav_id": "dade787f01de4bc0b645bb1976df0fdf"
+  }
+ ]
+}

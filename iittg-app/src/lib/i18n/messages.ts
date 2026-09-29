@@ -131,7 +131,8 @@ const en = {
 
   "fact.fare": "Lowest round-trip fare",
   "fact.updated": "Prices updated",
-  "fact.theoretical": "Distance-based theoretical fare",
+  "fact.theoretical": "Distance-based theoretical fare (USD)",
+  "fact.theoreticalLocal": "Theoretical fare in origin currency",
   "fact.ratio": "Fare vs theoretical",
   "fact.percentile": "Percentile in route history",
   "fact.historyRange": "Typical range",
@@ -154,6 +155,7 @@ const en = {
   "flight.driver.outsideBookingWindow":
     "Airlines have not opened bookings for these dates yet",
   "flight.driver.noQuote": "No fare available for these dates",
+  "flight.driver.noFxForAnchor": "No exchange rate was available to compare this fare against the distance-based reference",
   "flight.driver.blended": "Blended from recent fares",
   "flight.driver.staleQuote": "This cached fare may be out of date",
 
@@ -299,7 +301,8 @@ const zh: Record<MessageKey, string> = {
   "fact.indexNotBookable": "相对指数，非可预订房价",
   "fact.fare": "最低往返票价",
   "fact.updated": "价格更新于",
-  "fact.theoretical": "按距离推算的理论票价",
+  "fact.theoretical": "按距离推算的理论票价（美元）",
+  "fact.theoreticalLocal": "换算到出发地货币的理论票价",
   "fact.ratio": "实际票价 / 理论票价",
   "fact.percentile": "在该航线历史中的分位",
   "fact.historyRange": "常见价格区间",
@@ -350,6 +353,7 @@ const zh: Record<MessageKey, string> = {
   "flight.driver.aboveTheoretical": "高于按距离推算的理论票价",
   "flight.driver.outsideBookingWindow": "该日期航司尚未开放预订",
   "flight.driver.noQuote": "该日期暂无可用报价",
+  "flight.driver.noFxForAnchor": "缺少汇率，无法将该票价与距离推算的参考价比较",
   "flight.driver.blended": "由近期价格混合估算",
   "flight.driver.staleQuote": "该缓存价格可能已过期",
 

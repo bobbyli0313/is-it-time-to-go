@@ -49,6 +49,10 @@ export interface HttpJsonOptions {
    * a country/year it does not cover, which is a coverage gap, not a failure.
    */
   emptyOnStatus?: number;
+  /** Defaults to GET. Ignav's fare search, for instance, is POST-only. */
+  method?: "GET" | "POST";
+  /** JSON body, sent with `content-type: application/json` when present. */
+  body?: unknown;
 }
 
 export class HttpError extends Error {
@@ -91,6 +95,17 @@ function isRetryable(error: unknown): boolean {
   return false;
 }
 
+/**
+ * True for statuses that indicate the *request* is wrong — a bad method, a bad body,
+ * a missing parameter. These are programming errors: retrying them wastes quota and,
+ * worse, hides the mistake behind a generic failure. A 405 from a POST-only endpoint
+ * called with GET is exactly this case, and it was found by an end-to-end run rather
+ * than by a unit test.
+ */
+export function isRequestError(error: unknown): boolean {
+  return error instanceof HttpError && error.status !== undefined && error.status >= 400 && error.status < 500;
+}
+
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /**
@@ -116,6 +131,8 @@ export async function fetchJson<T>(
     userAgent = DEFAULT_USER_AGENT,
     headers = {},
     emptyOnStatus,
+    method = "GET",
+    body,
   } = options;
 
   let lastError: unknown;
@@ -126,8 +143,15 @@ export async function fetchJson<T>(
 
     try {
       const response = await fetch(url, {
+        method,
         signal: controller.signal,
-        headers: { "user-agent": userAgent, accept: "application/json", ...headers },
+        headers: {
+          "user-agent": userAgent,
+          accept: "application/json",
+          ...(body !== undefined ? { "content-type": "application/json" } : {}),
+          ...headers,
+        },
+        ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
         // Our own TTL cache owns freshness; Next's fetch cache would add a second,
         // invisible policy layer.
         cache: "no-store",

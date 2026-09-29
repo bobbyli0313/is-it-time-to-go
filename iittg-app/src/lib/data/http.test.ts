@@ -9,7 +9,7 @@
  */
 
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { fetchJson, HttpError, internals } from "@/lib/data/http";
+import { fetchJson, HttpError, internals, isRequestError } from "@/lib/data/http";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -138,5 +138,58 @@ describe("fetchJson retry behaviour", () => {
     expect(isRetryable(connectTimeout)).toBe(true);
 
     expect(isRetryable(new Error("something else entirely"))).toBe(false);
+  });
+});
+
+describe("request method and body", () => {
+  it("defaults to GET with no body", async () => {
+    let seen: RequestInit | undefined;
+    vi.stubGlobal("fetch", async (_url: string, init?: RequestInit) => {
+      seen = init;
+      return Response.json({});
+    });
+    await fetchJson("https://example.test/x");
+    expect(seen?.method).toBe("GET");
+    expect(seen?.body).toBeUndefined();
+  });
+
+  /**
+   * The bug this guards: Ignav's fare search is POST-only, and calling it with the
+   * client's GET default returned a 405 that the adapter logged and swallowed as
+   * "unavailable" — so live flight pricing was silently dead rather than visibly broken.
+   */
+  it("sends a JSON body with the right header when one is given", async () => {
+    let seen: RequestInit | undefined;
+    vi.stubGlobal("fetch", async (_url: string, init?: RequestInit) => {
+      seen = init;
+      return Response.json({});
+    });
+    await fetchJson("https://example.test/x", {
+      method: "POST",
+      body: { origin: "PVG", market: "CN" },
+    });
+
+    expect(seen?.method).toBe("POST");
+    expect(JSON.parse(String(seen?.body))).toEqual({
+      origin: "PVG",
+      market: "CN",
+    });
+    const headers = seen?.headers as Record<string, string>;
+    expect(headers["content-type"]).toBe("application/json");
+  });
+});
+
+describe("isRequestError", () => {
+  it("classifies 4xx as a caller mistake", () => {
+    // Retrying a malformed request wastes quota and hides the bug.
+    expect(isRequestError(new HttpError("HTTP 405", 405))).toBe(true);
+    expect(isRequestError(new HttpError("HTTP 400", 400))).toBe(true);
+    expect(isRequestError(new HttpError("HTTP 401", 401))).toBe(true);
+  });
+
+  it("does not classify 5xx or transport failures as caller mistakes", () => {
+    expect(isRequestError(new HttpError("HTTP 503", 503))).toBe(false);
+    expect(isRequestError(new TypeError("fetch failed"))).toBe(false);
+    expect(isRequestError(null)).toBe(false);
   });
 });

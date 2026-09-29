@@ -435,6 +435,28 @@ describe("live FX (Frankfurter)", () => {
     expect(result.snapshot.rate).toBeGreaterThan(0);
   });
 
+  /**
+   * The static fallback is only as good as its dependencies. Converting the USD
+   * distance anchor into a non-ECB currency needs a USD entry, and its absence made
+   * every TWD-origin flight dimension silently unavailable — the fallback returned null
+   * because the rate it needed was missing, not because the pair was unsupported.
+   */
+  it("can convert the USD anchor for every non-ECB currency it supports", async () => {
+    stubFetch();
+    for (const currency of ["TWD", "VND"]) {
+      const rate = await fxInternals.usdRateTo(currency, new Date());
+      expect(rate, `no USD rate available for ${currency}`).not.toBeNull();
+      expect(rate as number).toBeGreaterThan(0);
+    }
+    // And USD itself is the identity, needing no lookup at all.
+    expect(await fxInternals.usdRateTo("USD", new Date())).toBe(1);
+  });
+
+  it("returns null rather than a guess for a currency it does not know", async () => {
+    stubFetch();
+    expect(await fxInternals.usdRateTo("XYZ", new Date())).toBeNull();
+  });
+
   it("knows exactly which currencies the ECB publishes", () => {
     for (const code of ["CNY", "JPY", "KRW", "THB", "SGD", "MYR", "IDR", "PHP", "HKD"]) {
       expect(ECB_CURRENCIES.has(code)).toBe(true);
