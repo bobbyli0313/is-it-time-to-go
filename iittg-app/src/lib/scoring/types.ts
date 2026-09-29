@@ -62,22 +62,51 @@ export interface WeatherSample {
 
 /* ------------------------------------------------------------------ hotels */
 
-export type HotelBasis = "hotel-price-index" | "mock-flat";
+/**
+ * How the hotel number was produced.
+ *
+ * - `chain-direct-median`: the median of nightly rates this app collected from its
+ *   price source (Hotelbeds). A level, not a bookable quote.
+ * - `mock-flat`: the prototype's synthetic index, used until a city has been
+ *   collected.
+ */
+export type HotelBasis = "chain-direct-median" | "mock-flat";
+
+/** What a hotel dataset permits the app to publish. Mirrors `HotelDisclosure`. */
+export type HotelDisclosure = "price" | "index";
 
 export interface HotelQuote {
-  /** Per-night average in the destination currency. */
+  /** Median nightly rate across the city's collected hotels, in local currency. */
   perNightLocal: number;
   /** What the nightly price is being compared against — always explicit. */
   baselineLocal: number;
   /** 0-1 confidence, drives the confidence badge in the UI. */
   confidence: number;
   basis: HotelBasis;
-  /** Number of properties behind the number. Shown verbatim in the UI. */
+  /** Number of properties behind the median. Shown verbatim in the UI. */
   sampleSize: number;
   /**
-   * The index decomposed into its drivers. Kept explicit rather than collapsed
-   * into one opaque multiplier so the UI can say *why* a destination is
-   * expensive, and so the holiday effect is testable independently of season.
+   * How many properties the city's census holds in total. Together with
+   * `sampleSize` this is the coverage claim: a median over 9 of 371 hotels is a
+   * different statement from the same median over 300, and the UI says which.
+   */
+  propertyUniverse?: number;
+  /** ISO timestamp of the newest sample behind the number. */
+  collectedAt?: string;
+  /** True when that sample is old enough that the level may have moved. */
+  stale?: boolean;
+  /**
+   * What may be shown: the amount, or only its distance from the ¥500 anchor.
+   *
+   * Enforced in the scorer rather than the UI, because the API response is what the
+   * browser receives — hiding a field in a component would not hide it in the JSON.
+   */
+  disclosure?: HotelDisclosure;
+  /**
+   * The synthetic index decomposed into its drivers. Mock data only — kept
+   * explicit rather than collapsed into one opaque multiplier so the prototype can
+   * say *why* a city is expensive, and so the holiday effect is testable
+   * independently of season.
    */
   components?: {
     /** Multiplier from holiday proximity. */

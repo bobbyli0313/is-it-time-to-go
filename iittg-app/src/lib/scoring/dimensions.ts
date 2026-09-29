@@ -254,11 +254,16 @@ export function scoreWeather(
 /* ------------------------------------------------------------------ hotel */
 
 /**
- * Scores a normalised hotel *price index*, not a bookable rate.
+ * Scores a city's collected median nightly rate against the ¥500 anchor.
  *
- * Non-linear in the ratio to the baseline: doubling the index costs 30 points,
+ * Non-linear in the ratio to the baseline: doubling the price costs 30 points,
  * tripling costs ~48, so the score degrades quickly but never collapses to zero
  * while a destination remains merely expensive rather than absurd.
+ *
+ * The input is a *level* — the median across the city's collected hotels — not a
+ * relative index. What keeps the number honest is disclosed rather than assumed:
+ * how many properties are behind it, how many the city is known to have, and how
+ * old the samples are.
  */
 export function scoreHotel(quote: HotelQuote): DimensionScore {
   const p = PARAMS.hotel;
@@ -277,17 +282,38 @@ export function scoreHotel(quote: HotelQuote): DimensionScore {
   if (quote.sampleSize < p.minSampleForHighConfidence) {
     confidenceValue = Math.min(confidenceValue, 0.55);
   }
+  /**
+   * A stale level is a claim about a past market. It is not hidden and it is not
+   * treated as a failure — the number is still the best available — but it cannot
+   * carry the confidence a fresh one does.
+   */
+  if (quote.stale) confidenceValue = Math.min(confidenceValue, 0.35);
 
   const drivers: string[] = [
-    quote.basis === "hotel-price-index"
-      ? "hotel.driver.priceIndex"
+    quote.basis === "chain-direct-median"
+      ? "hotel.driver.chainMedian"
       : "hotel.driver.mockFlat",
   ];
   if (index <= 1) drivers.push("hotel.driver.belowBaseline");
   else if (index >= 1.6) drivers.push("hotel.driver.farAboveBaseline");
   else drivers.push("hotel.driver.aboveBaseline");
-  if (quote.sampleSize < p.minSampleForHighConfidence)
+  if (quote.sampleSize < p.minSampleForHighConfidence) {
     drivers.push("hotel.driver.thinSample");
+  }
+  if (quote.stale) drivers.push("hotel.driver.staleSamples");
+  if (quote.disclosure === "index") drivers.push("hotel.driver.indexOnly");
+
+  /**
+   * Index-only disclosure.
+   *
+   * A source that permits storing a rate but not republishing it still has to be
+   * scorable — the score only needs the *ratio*, the user only needs to know whether
+   * the city is expensive relative to the ¥500 anchor. So the amounts are removed
+   * here, in the layer whose output becomes the API response: omitting them in a
+   * component would leave them in the JSON.
+   */
+  const indexOnly = quote.disclosure === "index";
+  const distancePct = Math.round((index - 1) * 1000) / 10;
 
   return {
     key: "hotel",
@@ -296,13 +322,29 @@ export function scoreHotel(quote: HotelQuote): DimensionScore {
     confidence: confidenceFromNumber(confidenceValue),
     weight: PARAMS.total.weights.hotel,
     facts: {
+      // Fact keys *are* i18n key suffixes — see the contract in `messages.test.ts`.
       basis: quote.basis,
-      perNightLocal: Math.round(quote.perNightLocal),
-      baselineLocal: Math.round(quote.baselineLocal),
-      index: round1(index * 100) / 100,
+      ...(indexOnly
+        ? {
+            disclosure: "index" as const,
+            indexPctVsBaseline: distancePct,
+          }
+        : {
+            disclosure: "price" as const,
+            perNight: Math.round(quote.perNightLocal),
+            baseline: Math.round(quote.baselineLocal),
+            /**
+             * The ratio is only published alongside the amounts, never in index mode:
+             * a ratio times the ¥500 anchor recovers the price, so emitting it would
+             * publish exactly what the source forbids.
+             */
+            index: round1(index * 100) / 100,
+          }),
       sampleSize: quote.sampleSize,
-      /** Stated plainly in the UI: this is a relative index, not a booking price. */
-      disclaimer: "hotel.fact.indexNotBookable",
+      ...(quote.propertyUniverse !== undefined
+        ? { propertyUniverse: quote.propertyUniverse }
+        : {}),
+      ...(quote.collectedAt ? { collectedAt: quote.collectedAt } : {}),
       ...(quote.components
         ? {
             holidayLift: quote.components.holidayLift,
@@ -310,9 +352,14 @@ export function scoreHotel(quote: HotelQuote): DimensionScore {
             nearbyHolidayDays: quote.components.nearbyHolidayDays,
           }
         : {}),
+      /** Stated plainly in the UI: a collected median is not a booking price. */
+      disclaimer: "fact.medianNotBookable",
     },
     drivers,
-    debug: { deviation: round1(deviation * 100) / 100 },
+    debug: {
+      deviation: round1(deviation * 100) / 100,
+      stale: quote.stale ? 1 : 0,
+    },
   };
 }
 

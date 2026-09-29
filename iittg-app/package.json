@@ -2,7 +2,7 @@
   "name": "iittg-app",
   "version": "0.1.0",
   "private": true,
-  "description": "Is It Time To Go — travel decision scoring prototype (mock data, no external APIs)",
+  "description": "Is It Time To Go \u2014 travel decision scoring prototype (mock data, no external APIs)",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -11,7 +11,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "gen:data": "node scripts/generate-mock-data.mjs"
+    "crawl:hotels": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/ts-loader.mjs scripts/crawl-hotel-prices.ts"
   },
   "dependencies": {
     "next": "16.3.6",

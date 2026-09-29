@@ -174,8 +174,11 @@ export function scoreTrip(
   if (context.weather.basis === "climate-normal") {
     warnings.push("warning.weatherIsClimateNormal");
   }
-  if (context.hotel.basis !== "hotel-price-index") {
+  if (context.hotel.basis !== "chain-direct-median") {
     warnings.push("warning.hotelIsMock");
+  }
+  if (context.hotel.stale) {
+    warnings.push("warning.hotelDataIsStale");
   }
   if (!context.flight || context.flight.kind === "unavailable") {
     warnings.push("warning.flightUnavailable");

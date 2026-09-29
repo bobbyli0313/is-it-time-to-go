@@ -5,7 +5,8 @@
  *
  *  1. Choose, per dimension, whether to use a live source or the mock one. Sources
  *     are composed individually because their readiness differs: weather, holidays
- *     and FX need no credentials, while flight pricing needs a key.
+ *     and FX need no credentials, while flight pricing needs a key and hotel
+ *     pricing needs a collection run.
  *
  *  2. Assemble a `ScoreContext` from whichever providers were chosen, alongside a
  *     provenance record. Provenance is returned rather than inferred so the UI can
@@ -14,20 +15,26 @@
  *
  * ## Why hotel pricing has no external provider
  *
- * There is no self-serve API for "the average nightly rate of central hotels". The
- * OTA APIs are partnership-gated, and their terms forbid redistributing prices
- * anyway. Hotels are therefore served as an index built from samples this app
- * collects itself; while no samples exist, the mock index stands in and the UI says
- * so. That is a deliberate design position, not an unfinished integration.
+ * A hotel chain's own site cannot answer "the median cost of a night in this city" —
+ * its portfolio is not a city. Prices come from an inventory aggregator (Hotelbeds),
+ * collected offline into a dataset by `./collect/` and read through a file-backed
+ * store here. Until a collection run has covered a city, the mock index stands in and
+ * the UI says so.
  */
 
 import type { ScoreContext, TripInput } from "../scoring/types";
-import { getDataSources, getFlightCredentials, getHotelSource } from "./config";
+import {
+  getDataSources,
+  getFlightCredentials,
+  getHotelDatasetPath,
+  getHotelSource,
+} from "./config";
 import type { PricingCredentials } from "./config";
 import { createMockProvider } from "./mock-provider";
 import { createLiveProvider } from "./live";
 import { fetchIgnavFlightQuote } from "./live/flights";
-import { fetchSelfCollectedHotelIndex } from "./hotel-index";
+import { fetchSelfCollectedHotelPrice } from "./hotel-price";
+import { createFileStore } from "./hotel-dataset-file";
 import type { DataProvider, DataProvenance } from "./types";
 
 export interface ResolvedProviders {
@@ -58,7 +65,7 @@ function createIgnavProvider(credentials: PricingCredentials): DataProvider {
     fetchFx() {
       throw new Error("Ignav does not provide exchange rates");
     },
-    fetchHotelIndex() {
+    fetchHotelPrice() {
       throw new Error("Ignav does not provide hotel pricing");
     },
     fetchFlightQuote(origin, destination, departDate, returnDate) {
@@ -74,29 +81,37 @@ function createIgnavProvider(credentials: PricingCredentials): DataProvider {
 }
 
 /**
- * Hotel index over locally collected price samples.
+ * The collected hotel reference price, read from a JSON dataset.
  *
- * Only the reading side lives here. Collecting the samples is a separate, offline
- * job: it must not run on a request path, and keeping it out of this module is what
- * makes that structurally true rather than merely intended.
+ * Only the reading side lives here. Collecting is an offline job
+ * (`scripts/crawl-hotel-prices.ts`): it must not run on a request path, and keeping
+ * it out of this module is what makes that structurally true rather than merely
+ * intended.
  */
-function createSelfCollectedHotelProvider(): DataProvider {
+function createSelfCollectedHotelProvider(datasetPath: string): DataProvider {
+  const store = createFileStore(datasetPath);
   return {
-    name: "self-collected-hotel-index",
+    name: "self-collected-hotel-median",
     fetchWeather() {
-      throw new Error("The hotel index does not provide weather");
+      throw new Error("The hotel dataset does not provide weather");
     },
     fetchHolidays() {
-      throw new Error("The hotel index does not provide holidays");
+      throw new Error("The hotel dataset does not provide holidays");
     },
     fetchFx() {
-      throw new Error("The hotel index does not provide exchange rates");
+      throw new Error("The hotel dataset does not provide exchange rates");
     },
     fetchFlightQuote() {
-      throw new Error("The hotel index does not provide flight pricing");
+      throw new Error("The hotel dataset does not provide flight pricing");
     },
-    fetchHotelIndex(destination, departDate, holidays) {
-      return fetchSelfCollectedHotelIndex(destination, departDate, holidays);
+    fetchHotelPrice(destination, departDate, holidays, now = new Date()) {
+      return fetchSelfCollectedHotelPrice(
+        destination,
+        departDate,
+        holidays,
+        store,
+        now,
+      );
     },
   };
 }
@@ -115,7 +130,7 @@ export function resolveProviders(): ResolvedProviders {
     // Weather, holidays and FX are genuinely live; the two pricing paths are passed
     // through to whichever implementation was selected below.
     flight: mock.fetchFlightQuote.bind(mock),
-    hotel: mock.fetchHotelIndex.bind(mock),
+    hotel: mock.fetchHotelPrice.bind(mock),
   });
 
   const flightCredentials = getFlightCredentials();
@@ -124,7 +139,7 @@ export function resolveProviders(): ResolvedProviders {
 
   const useSelfCollectedHotel = getHotelSource() === "self-collected";
   const hotel = useSelfCollectedHotel
-    ? createSelfCollectedHotelProvider()
+    ? createSelfCollectedHotelProvider(getHotelDatasetPath())
     : mock;
 
   return {
@@ -138,7 +153,7 @@ export function resolveProviders(): ResolvedProviders {
       holidays: sources.holidays === "live" ? "live-nager-date" : "mock",
       fx: sources.fx === "live" ? "live-ecb" : "mock",
       flight: useLiveFlight ? "live-ignav" : "mock",
-      hotel: useSelfCollectedHotel ? "self-collected-index" : "mock",
+      hotel: useSelfCollectedHotel ? "self-collected" : "mock",
     },
   };
 }
@@ -184,10 +199,11 @@ export async function buildScoreContext(
     providers.fx.fetchFx(trip.origin, trip.destination, now),
   ]);
 
-  const hotel = await providers.hotel.fetchHotelIndex(
+  const hotel = await providers.hotel.fetchHotelPrice(
     trip.destination,
     trip.departDate,
     holidayResult.holidays,
+    now,
   );
 
   return {

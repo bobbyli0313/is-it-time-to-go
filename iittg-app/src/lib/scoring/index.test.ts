@@ -244,7 +244,7 @@ describe("scoreHotel", () => {
     perNightLocal,
     baselineLocal,
     confidence: 0.8,
-    basis: "hotel-price-index",
+    basis: "chain-direct-median",
     sampleSize: 20,
   });
 
@@ -280,10 +280,43 @@ describe("scoreHotel", () => {
     expect(s.drivers).toContain("hotel.driver.thinSample");
   });
 
-  it("labels the basis so the UI can say this is an index, not a rate", () => {
-    const s = scoreHotel(quote(1000));
-    expect(s.facts.basis).toBe("hotel-price-index");
-    expect(s.facts.disclaimer).toBe("hotel.fact.indexNotBookable");
+  it("labels the basis so the UI can say this is collected data, not a quote", () => {
+    const s = scoreHotel({ ...quote(1000), propertyUniverse: 51, collectedAt: "2026-09-28T00:00:00Z" });
+    expect(s.facts.basis).toBe("chain-direct-median");
+    expect(s.facts.disclaimer).toBe("fact.medianNotBookable");
+    // Coverage is disclosed, not implied: 9 priced out of 51 known.
+    expect(s.facts.sampleSize).toBe(20);
+    expect(s.facts.propertyUniverse).toBe(51);
+    expect(s.facts.collectedAt).toBe("2026-09-28T00:00:00Z");
+  });
+
+  it("withholds the amounts in index-only mode, and reports the distance instead", () => {
+    const priced = scoreHotel({ ...quote(1000), disclosure: "price" });
+    expect(priced.facts.perNight).toBe(1000);
+    expect(priced.facts.baseline).toBe(500);
+    expect(priced.facts.disclosure).toBe("price");
+
+    const indexOnly = scoreHotel({ ...quote(1000), disclosure: "index" });
+    // The score is identical — the ratio is all it needed.
+    expect(indexOnly.score).toBe(priced.score);
+    // But the numbers the source forbids publishing are gone from the response,
+    // not merely hidden by a component: facts is what the browser receives.
+    expect(indexOnly.facts.perNight).toBeUndefined();
+    expect(indexOnly.facts.baseline).toBeUndefined();
+    expect(indexOnly.facts.disclosure).toBe("index");
+    // +100% over the ¥500 anchor.
+    expect(indexOnly.facts.indexPctVsBaseline).toBe(100);
+    // And the ratio goes with them: ratio × ¥500 would recover the amount.
+    expect(indexOnly.facts.index).toBeUndefined();
+    expect(indexOnly.drivers).toContain("hotel.driver.indexOnly");
+  });
+
+  it("drops confidence and says so when the collected prices are stale", () => {
+    const fresh = scoreHotel(quote(900));
+    const old = scoreHotel({ ...quote(900), stale: true });
+    expect(old.drivers).toContain("hotel.driver.staleSamples");
+    expect(old.confidence).toBe("low");
+    expect(fresh.confidence).not.toBe("low");
   });
 });
 
@@ -692,7 +725,7 @@ describe("scoreTrip", () => {
       perNightLocal: 1000,
       baselineLocal: 500,
       confidence: 0.8,
-      basis: "hotel-price-index",
+      basis: "chain-direct-median",
       sampleSize: 20,
     } satisfies HotelQuote,
     flight: {

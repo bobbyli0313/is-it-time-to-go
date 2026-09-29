@@ -10,7 +10,8 @@
  * Implementations must uphold the provenance rules the model depends on:
  *  - never present a climate normal as a forecast,
  *  - never present a cached fare as a live quote,
- *  - never present a hotel price index as a bookable rate.
+ *  - never present a collected median as a bookable rate, and never present
+ *    synthetic data as collected.
  */
 
 import type {
@@ -38,10 +39,16 @@ export interface DataProvider {
 
   fetchWeather(destination: City, date: string, now?: Date): Promise<WeatherSample>;
 
-  fetchHotelIndex(
+  /**
+   * The city's reference nightly rate: the median across its collected hotels.
+   * Returns a zero-confidence quote when no city data exists, which the scorer
+   * turns into an excluded dimension rather than a cheap one.
+   */
+  fetchHotelPrice(
     destination: City,
     departDate: string,
     holidays: Holiday[],
+    now?: Date,
   ): Promise<HotelQuote>;
 
   fetchFlightQuote(
@@ -69,8 +76,12 @@ export interface DataProvenance {
   holidays: "live-nager-date" | "mock";
   fx: "live-ecb" | "static-reference" | "mock" | "not-applicable";
   flight: "live-ignav" | "mock";
-  /** Hotels are an index over samples this app collected, not a third-party feed. */
-  hotel: "self-collected-index" | "mock";
+  /**
+   * Hotels are a median over samples this app collected itself, not a
+   * third-party feed. `self-collected` is deliberately distinct from `mock`, so a
+   * deployment that has never run the collector cannot look live.
+   */
+  hotel: "self-collected" | "mock";
 }
 
 export interface BuiltContext {

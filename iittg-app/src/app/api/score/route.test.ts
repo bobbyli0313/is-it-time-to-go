@@ -71,11 +71,13 @@ describe("scoring route", () => {
     expect(far.result.warnings).toContain("warning.weatherIsClimateNormal");
   });
 
-  it("declares hotels as a price index, never a bookable rate", async () => {
+  it("declares hotels as sample data here, and never as a bookable rate", async () => {
+    // No collection run has covered these cities in the test environment, so the
+    // mock stands in — and it must say so rather than claim collected prices.
     const body = await scoreTripViaRoute("shanghai", "tokyo", d(3), d(7));
     const hotel = body.result.dimensions.find((x) => x.key === "hotel")!;
-    expect(hotel.facts.basis).toBe("hotel-price-index");
-    expect(hotel.facts.disclaimer).toBe("hotel.fact.indexNotBookable");
+    expect(hotel.facts.basis).toBe("mock-flat");
+    expect(hotel.facts.disclaimer).toBe("fact.medianNotBookable");
   });
 
   it("carries a real timestamp on cached fares", async () => {

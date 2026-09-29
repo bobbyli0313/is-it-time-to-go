@@ -27,22 +27,40 @@ const NUMERIC_FACTS = new Set([
   "precipProbabilityPct",
   "tempSpreadC",
   "humiditySpreadPct",
+  "perNight",
+  "baseline",
   "index",
   "sampleSize",
+  "propertyUniverse",
   "percentile",
   "lookbackDays",
+  "fareLocal",
+  "theoreticalUsd",
+  "ageHours",
   "fareToTheoreticalRatio",
+  "historyMin",
+  "historyMedian",
+  "historyMax",
   "holidayPressureDays",
   "tripDays",
   "weekendDays",
   "holidayCount",
+  "longestPeakRun",
   "nearbyHolidayDays",
+  "yearLow",
+  "yearHigh",
   "rangePct",
   "positionInRange",
+  "indexPctVsBaseline",
 ]);
 
-/** Facts whose value is an ISO timestamp. */
-const TIME_FACTS = new Set(["fetchedAt", "asOf"]);
+/**
+ * Facts whose value is an ISO timestamp.
+ *
+ * The row label is `t("fact." + key)`, so every key a scorer emits must exist in
+ * both dictionaries; `messages.test.ts` asserts exactly that by walking the facts.
+ */
+const TIME_FACTS = new Set(["fetchedAt", "asOf", "collectedAt"]);
 
 /** Multiplier facts, rendered as "1.44x" rather than a bare number. */
 const MULTIPLIER_FACTS = new Set(["holidayLift", "seasonalFactor"]);
@@ -114,6 +132,18 @@ function formatFactValue(
   }
   if (factKey === "disclaimer" && typeof value === "string") {
     return t(value);
+  }
+  if (factKey === "disclosure" && typeof value === "string") {
+    return t(`hotel.disclosure.${value}`);
+  }
+  /**
+   * The index-only figure is a signed distance from the anchor, not a level: "+64%"
+   * reads correctly where "64" would look like a price.
+   */
+  if (factKey === "indexPctVsBaseline" && typeof value === "number") {
+    return `${value > 0 ? "+" : ""}${new Intl.NumberFormat("en-US", {
+      maximumFractionDigits: 1,
+    }).format(value)}%`;
   }
   if (factKey === "unavailable" || factKey === "reason") {
     return typeof value === "string" ? value : String(value);

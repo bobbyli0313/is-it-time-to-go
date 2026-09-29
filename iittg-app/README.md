@@ -4,10 +4,10 @@ Travel decision scoring. Answers one question: **is now a good time to go?** —
 a 1–100 score built from weather, hotel prices, flight prices, crowding and
 exchange rates.
 
-Three of the five dimensions run on **live data** with no API key. Flight and hotel
-pricing run on Ignav (awaiting a key) and on a price index this app builds itself.
-The UI states, per dimension, which is which — a partially-integrated deployment must
-never look fully live.
+Three of the five dimensions run on **live data** with no API key. Flight pricing
+runs on Ignav (awaiting a key), and hotel pricing runs on a median this app collects
+itself with an offline collector. The UI states, per dimension, which is which — a
+partially-integrated deployment must never look fully live.
 
 ## Run it
 
@@ -20,7 +20,7 @@ No configuration is required: weather, holidays and FX are live out of the box. 
 enable flight pricing, copy `.env.example` to `.env.local` and add an Ignav key.
 
 ```bash
-npm test             # 134 tests, offline (fixtures, no network)
+npm test             # 225 tests, offline (fixtures, no network)
 npm run typecheck    # tsc --noEmit
 npm run lint         # eslint
 npm run build        # production build
@@ -37,7 +37,7 @@ npm run build        # production build
 | Crowding | [Nager.Date](https://date.nager.at) — public holidays, plus a curated peak-period table | none | **live** |
 | Exchange rate | [Frankfurter](https://frankfurter.dev) — ECB daily reference rates, 12-month range from real observations | none | **live** |
 | Flight | [Ignav](https://ignav.com) — self-serve fare search | required | adapter written, awaiting key |
-| Hotel | **Our own price index** over samples this app collects | none | reader written, collector is a separate job |
+| Hotel | **Our own collection**: the median nightly rate across a city's priced hotels | none | collector + reader written and tested; needs a source (see below) |
 
 ### Why not Amadeus
 
@@ -50,25 +50,55 @@ The knock-on effect is larger than one provider: flight pricing on the open mark
 now either enterprise-gated or partnership-gated, so [Ignav](https://ignav.com) —
 self-serve, 1,000 free requests then $2 per 1,000 — is the pragmatic choice.
 
-### Why hotels are our own data, not an API
+### Why hotels are collected, not scraped
 
-There is **no self-serve API for "the average nightly rate of central hotels"**. The
-OTA APIs (Booking, Expedia, Agoda) are partnership-gated, and their terms forbid
-redistributing prices regardless of access. Hotel pricing is therefore an index built
-from samples this app collects and stores itself.
+There is **no self-serve API from a hotel chain for "the median cost of a night in
+this city"** — and a single chain could not answer the question anyway, since its
+portfolio is not a city. Rates come from **Hotelbeds**, an inventory aggregator whose
+availability search returns every hotel around a point. The reference price is built
+from what it returns, stored locally, and served as a median.
 
 This is a deliberate design position rather than an unfinished integration:
 
-- **It is a relative index, never a bookable rate.** The UI says so on every card.
-  Publishing "Tokyo is 24% above its baseline" is original data; publishing "this room
-  costs ¥2,882" would be redistribution.
-- **Coverage is earned.** A city with no samples reports an unavailable dimension, not
-  an invented number.
-- **The basket is fixed per city.** An index is only comparable over time if its
-  members do not change, so samples outside the declared basket are rejected.
+- **It is a collected median, never a bookable quote.** The UI says so on every card.
+- **One property, one vote.** Each property is reduced to its own median before the
+  city median is taken, so a hotel sampled on twenty nights cannot outweigh one
+  sampled once. A pooled median would be a median over *collection effort*.
+- **Coverage is disclosed only when it is known.** "12 of 57 hotels" is meaningful
+  only when that 57 really is the city's inventory — which a supplied census file can
+  assert and an availability search cannot. Otherwise the quote reports the count
+  behind the median and claims no fraction of the city.
+- **Age is disclosed.** Samples older than 45 days mark the quote stale.
+- **A thin city is excluded, not guessed.** Below eight priced properties the
+  dimension reports as unavailable, exactly as a missing fare does.
 - **Collection is an offline job, never a request path.** The product must not depend
   on a live scrape to render a score. That separation is structural: the collector
-  does not live in the request-path module.
+  lives in `src/lib/data/collect/`, not in the request-path module.
+
+### Collecting hotel prices
+
+```bash
+npm run crawl:hotels -- --cities tokyo,osaka --dates 2026-10-20,2026-10-27
+npm run crawl:hotels -- --cities tokyo --census census.csv --import rates.csv
+npm run crawl:hotels -- --no-write          # report only; validates the inputs
+```
+
+**Hotelbeds is the built-in price source.** One availability request returns every
+hotel with availability around a city centre — the city-wide breadth a median needs,
+and something no single chain's own site can provide. It needs a free self-serve
+evaluation key (50 requests/day) in `IITTG_HOTELBEDS_API_KEY` / `IITTG_HOTELBEDS_SECRET`.
+
+**A source may publish the amount or only the distance from the anchor.** APItude's
+`net` is a wholesale cost, so it defaults to `--disclosure index`: the app then shows
+"16% below the ¥500 anchor" instead of a price. The switch is enforced in the scorer,
+so an amount the source forbids never reaches the browser. `--disclosure price` opts
+in when an agreement allows it.
+
+The collector obeys robots.txt before every path, paces its requests per host,
+honours `Crawl-delay`, caps each run's request budget, and reports every failure as a
+named reason (`blocked by Akamai`, `refused by robots.txt: Disallow: /search/result/`)
+rather than inventing a number. Where a site refuses anonymous clients it will use a
+session the operator supplies, and will never obtain one itself.
 
 ### Known limitations, disclosed in the UI
 
@@ -76,10 +106,14 @@ This is a deliberate design position rather than an unfinished integration:
   shapes come from Ignav's published OpenAPI document, but no fare has been observed,
   so parsing is defensive (an unexpected shape yields "unavailable" rather than a
   plausible-looking wrong number) and its confidence is capped at 0.55.
-- **Hotel coverage depends on collection.** A city with no basket or no samples near
+- **Hotel coverage depends on collection.** A city with no census or no prices near
   the requested dates reports the dimension as unavailable, and the UI says which of
   the two it is. Collection is deliberately offline: the product must not depend on a
   live scrape to render a score.
+- **The collected median can only be as broad as its sources.** A chain's own site
+  enumerates that chain, not the city, so today's data is chain-scoped until a
+  city-wide inventory source (a partner API such as Hotelbeds, or a paid aggregator)
+  is wired in. The model labels this rather than hiding it.
 - **A fare quoted in a currency other than the origin's is discarded**, not converted.
   The score compares fares against an origin-currency baseline, so a mismatched
   currency would not be imprecise — it would be meaningless.
@@ -109,7 +143,9 @@ browser
         validates, resolves providers, scores, returns provenance
           └── lib/data          provider composition (per-dimension live | mock)
                 ├── live/       Open-Meteo · Nager.Date · Frankfurter · Ignav
-                ├── hotel-index.ts  self-collected price index (read side)
+                ├── hotel-price.ts  collected median (read side)
+                ├── hotel-dataset.ts / hotel-dataset-file.ts   schema, validation, store
+                ├── collect/    the offline collector: robots, pacing, adapters, CLI
                 ├── mock-provider.ts
                 ├── http.ts     timeouts, bounded retries, IPv4 preference
                 └── cache.ts    TTL cache: memory + disk, single-flight
@@ -150,19 +186,22 @@ success**. See `src/lib/data/http.ts`.
 **1. Provenance is part of the data, not a UI afterthought.**
 A weather sample *is* a forecast or *is* a climate normal — a discriminated union, so
 the compiler refuses to let a 45-day-out historical average be treated as a
-prediction. Same for cached fares and hotel indices. Confidence is derived from
-provenance, not from how pleasant the number looks. The API returns a `provenance`
-record and the UI renders it, so "which of these numbers are real?" is always
-answerable.
+prediction. Same for cached fares, collected medians and synthetic sample data: the
+mock no longer claims the collected basis, because a prototype that cannot be told
+apart from production is the thing these rules exist to prevent. Confidence is derived
+from provenance, coverage and age, not from how pleasant the number looks. The API
+returns a `provenance` record and the UI renders it, so "which of these numbers are
+real?" is always answerable.
 
 **2. The scoring layer never emits prose.**
 It emits i18n keys. `src/lib/i18n/messages.test.ts` walks every scorer across every
-branch and asserts each emitted key resolves in both locales, so a typo cannot
-silently ship a raw key to a user.
+branch and asserts each emitted key — drivers *and* fact labels — resolves in both
+locales, so a typo cannot silently ship a raw key to a user. It caught seven such
+labels when the fact-key check was added.
 
 ## Tests
 
-134 tests, all offline. No unit test touches the network — the live adapters are
+225 tests, all offline. No unit test touches the network — the live adapters are
 tested against verbatim recorded fixtures in `src/lib/data/live/__fixtures__/`, and
 the fetch stub fails loudly on an unstubbed URL, so a test that quietly reached the
 internet would be a failure rather than a flake.
@@ -178,9 +217,11 @@ stop reflecting production.
   fare response: the adapter's request and response shapes come from the published
   OpenAPI document, but no fare has been observed, so parsing is defensive and its
   confidence is capped at 0.55 until verified.
-- **A hotel sample collector**, plus curated baskets for the launch cities. The reader
-  and the index maths are done and tested; what is missing is the offline job that
-  fills the sample file.
+- **Wider city coverage.** The collector, the dataset schema, the median and the
+  disclosure rules are done and tested, and Hotelbeds is wired in. What limits coverage
+  now is the evaluation key's inventory: it has data for Tokyo, Osaka and Sapporo and
+  none for the other Asian cities in scope, so those report "no hotels returned
+  availability" until a production key (or a second source via `--source`) is added.
 - **Real fare history** for the percentile path. The scorer currently falls back to
   the distance model when no history exists, which the UI labels. Building history is
   a batch job, not a request-path concern.

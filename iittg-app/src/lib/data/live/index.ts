@@ -3,8 +3,9 @@
  *
  * Weather (Open-Meteo), holidays (Nager.Date) and FX (Frankfurter) all run without
  * keys, so these three are genuinely live. Flight and hotel pricing are not here:
- * they need Amadeus credentials and live in `amadeus.ts`, which reports that it is
- * unavailable rather than pretending.
+ * flights need a key, and hotel prices come from an offline collection run
+ * (`../collect/`). Both are delegated to whichever implementation the composition
+ * layer selected, so neither is faked here.
  */
 
 import type {
@@ -27,7 +28,7 @@ import { fetchLiveFx, type FxResult } from "./fx";
  * duplicating any logic here.
  */
 export function createLiveProvider(delegate: {
-  hotel: DataProvider["fetchHotelIndex"];
+  hotel: DataProvider["fetchHotelPrice"];
   flight: DataProvider["fetchFlightQuote"];
 }): DataProvider {
   return {
@@ -41,12 +42,13 @@ export function createLiveProvider(delegate: {
       return fetchLiveWeather(destination, date, now);
     },
 
-    fetchHotelIndex(
+    fetchHotelPrice(
       destination: City,
       departDate: string,
       holidays: Holiday[],
+      now: Date = new Date(),
     ): Promise<HotelQuote> {
-      return delegate.hotel(destination, departDate, holidays);
+      return delegate.hotel(destination, departDate, holidays, now);
     },
 
     fetchFlightQuote(

@@ -29,11 +29,11 @@ export interface DataSources {
   hotel: SourceMode;
 }
 
-/** How the hotel price index is sourced. */
+/** How the hotel reference price is sourced. */
 export type HotelSource =
   /** Nothing collected yet; the mock index is used. */
   | "mock"
-  /** Built from price samples this app collects and stores itself. */
+  /** Median across hotels collected by `scripts/crawl-hotel-prices.ts`. */
   | "self-collected";
 
 export interface PricingCredentials {
@@ -86,6 +86,39 @@ export function getHotelSource(): HotelSource {
 }
 
 /**
+ * The collected dataset the read side serves.
+ *
+ * A path rather than credentials: the collector writes a JSON file (see
+ * `scripts/crawl-hotel-prices.ts`), and this is where the app picks it up. Kept
+ * outside `.next/` so a rebuild never discards a collection run.
+ */
+export function getHotelDatasetPath(): string {
+  return process.env.IITTG_HOTEL_DATASET ?? "data/hotel-prices.json";
+}
+
+/**
+ * Hotelbeds credentials for the city-wide hotel price collection.
+ *
+ * Optional on purpose: the collector runs without them (`--import`), and the app never needs them —
+ * only `scripts/crawl-hotel-prices.ts` does. Evaluation keys are self-serve and limited to 50 requests/day.
+ */
+export function getHotelbedsCredentials(): {
+  apiKey: string;
+  secret: string;
+  environment: "test" | "production";
+} | null {
+  const apiKey = process.env.IITTG_HOTELBEDS_API_KEY;
+  const secret = process.env.IITTG_HOTELBEDS_SECRET;
+  if (!apiKey || !secret) return null;
+  return {
+    apiKey,
+    secret,
+    environment:
+      process.env.IITTG_HOTELBEDS_ENV === "production" ? "production" : "test",
+  };
+}
+
+/**
  * Whether real flight pricing is configured. Surfaced to the UI so the "sample data"
  * disclosure stays accurate instead of silently claiming live data.
  */
@@ -95,8 +128,16 @@ export function pricingIsLive(): boolean {
 
 /** Thrown when a live source is requested but cannot be used. */
 export class MissingCredentialsError extends Error {
-  constructor(public readonly provider: string) {
+  /**
+   * Declared rather than written as a parameter property: the collector CLI imports
+   * this module and runs it through Node's strip-only TypeScript support, which
+   * rejects that syntax. See `scripts/ts-loader.mjs`.
+   */
+  readonly provider: string;
+
+  constructor(provider: string) {
     super(`Source "${provider}" is set to live but no credentials are configured.`);
     this.name = "MissingCredentialsError";
+    this.provider = provider;
   }
 }

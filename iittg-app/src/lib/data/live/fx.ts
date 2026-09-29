@@ -51,9 +51,17 @@ export interface FxResult {
 }
 
 export class FxUpstreamError extends Error {
-  constructor(message: string, public readonly status?: number) {
+  /**
+   * Declared rather than written as a parameter property: the collector CLI runs
+   * this module through Node's strip-only TypeScript support, which rejects that
+   * syntax. See `scripts/ts-loader.mjs`.
+   */
+  readonly status?: number;
+
+  constructor(message: string, status?: number) {
     super(message);
     this.name = "FxUpstreamError";
+    this.status = status;
   }
 }
 

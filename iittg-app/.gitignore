@@ -9,3 +9,10 @@ next-env.d.ts
 !.env.example
 .DS_Store
 npm-debug.log*
+
+# Collected hotel prices, at the repo-relative path the collector defaults to.
+# Anchored with a leading slash on purpose: a bare `data/` also matches any nested
+# directory called data — including src/lib/data/, which is where the code lives.
+# Not committed: a wholesale rate feed is not ours to redistribute, and the file is
+# an artefact. Regenerate with: npm run crawl:hotels
+/data/

@@ -18,7 +18,7 @@ dimension scores and a total, but the rules as written do not produce them:
 | Dimension | Brief's rule | Brief's example | What the rule yields | What this model does |
 |---|---|---|---|---|
 | Weather | closer to 25 °C / 50% is better | 100 | 100 | 100 — matches |
-| Hotel | closer to ¥500/night is better, ≤¥500 is full marks | 70 at ¥1000 | no formula given | 70 — decay fitted to the example |
+| Hotel | closer to ¥500/night is better, ≤¥500 is full marks | 70 at ¥1000 | no formula given | 70 — decay fitted to the example, on a collected median |
 | Flight | `miles × $0.10`, dearer scores lower | 20 | ~34 | 20 in the distance fallback, fitted |
 | Crowding | more holidays scores lower | 90 with "only weekends" | 100 (no holidays) | ~98 — weekends are counted, which the same sentence implies |
 | FX | closer to the 12-month high scores higher | 88 | 97 | 92.3 |
@@ -62,19 +62,75 @@ grades the whole trip on it. `debug.sampledDate` records which day that was.
 ## b. Hotel
 
 ```
-index  = perNightLocal / baselineLocal          (baseline = ¥500, converted)
-hotel  = 100 · exp(−0.356675 · max(0, index − 1)),  floored at 5
+ratio  = perNightLocal / baselineLocal          (baseline = ¥500, converted)
+hotel  = 100 · exp(−0.356675 · max(0, ratio − 1)),  floored at 5
 ```
 
-The decay constant is fitted so that an index of exactly 2× baseline scores 70 —
-the only hotel data point the brief provides. Behaviour: 1× → 100, 1.5× → ~84,
-2× → 70, 3× → ~49, 4× → ~34.
+The decay constant is fitted so that a price of exactly 2× baseline scores 70 — the
+only hotel data point the brief provides. Behaviour: 1× → 100, 1.5× → ~84, 2× → 70,
+3× → ~49, 4× → ~34.
 
-**This scores a normalised price _index_, not a bookable rate.** No public API
-exposes "the average price of five central hotels", and OTA terms forbid
-redistributing their prices. The mock provider returns an index with its drivers
-disclosed separately (`holidayLift`, `seasonal`, `cityLevel`) so the UI can say
-*why* a city is expensive rather than showing one opaque number.
+### What `perNightLocal` is
+
+**The median nightly rate across a city's collected hotels**, comparing like with
+like:
+
+```
+per property:   median of that property's prices in the ±3-day window
+                (verified extractions preferred over inferred ones)
+per city:       median of the per-property medians
+published when: at least 8 properties have prices
+```
+
+Three rules do the real work, and each exists because of a specific way the number
+could otherwise mislead:
+
+- **One property, one vote.** Pooling every sample would weight the median by
+  collection effort: a hotel sampled on twenty nights would decide the city's price on
+  its own. Reducing each property to its own median first is what makes "the median of
+  the hotels" true.
+- **Coverage is disclosed, and scoped.** `sampleSize` is how many properties are
+  behind the number; `propertyUniverse` is how many the census knows. A census that
+  enumerates one chain is reported as `censusScope: "chain"`, not as the city — a
+  chain's business hotels sit below the city's average, so the same numbers carry a
+  confidence penalty when the census is chain-scoped.
+- **Age is disclosed.** Samples older than 45 days set `stale`, which cuts confidence
+  and adds a driver, because a level collected months ago is a claim about a past
+  market.
+
+Confidence combines breadth, dispersion (IQR ÷ median), coverage, the share of
+inferred extractions, staleness and scope, and is **capped at 0.62** — below the
+scorer's 0.66 "high" threshold, on purpose. A collected median is one room type per
+property, not a survey.
+
+### Disclosure: the amount, or the distance from ¥500
+
+A source may permit storing a rate but not republishing it — Hotelbeds' `net` is a
+wholesale cost, and its agreement governs what may be shown. So a dataset carries
+`disclosure`:
+
+```
+disclosure = "price"   →  facts: { perNight, baseline, index, … }
+disclosure = "index"   →  facts: { indexPctVsBaseline, disclosure: "index", … }
+```
+
+The score is identical either way — it only ever needed the ratio. What changes is what
+leaves the server. The branch lives in `scoreHotel` rather than in a component because
+`facts` becomes the API response: hiding a field in the UI would leave it in the JSON.
+In index mode the ratio is withheld too, since ratio × ¥500 recovers the price.
+
+**Below eight priced properties the dimension is excluded, not scored low.** A
+missing price is not a cheap one, and the same rule already governs unavailable fares.
+
+### Why it is collected rather than fetched
+
+The collector in `src/lib/data/collect/` reads prices from **Hotelbeds** — an
+inventory aggregator whose one availability call returns every hotel around a city
+centre, across chains, which is the breadth a city median needs. It obeys robots.txt,
+paces itself, and can also read a file via `--import` for prices collected elsewhere.
+The mock provider returns a synthetic index with its drivers disclosed separately
+(`holidayLift`, `seasonal`, `cityLevel`) and labels its basis `mock-flat`, so it can
+never be mistaken for collected data.
 
 ## c. Flight
 
@@ -184,7 +240,7 @@ UI states this per dimension; a partially-live deployment must not look fully li
 | Dimension | Source | Confidence is capped by |
 |---|---|---|
 | Weather | Open-Meteo. Forecast inside 16 days; a **monthly** climate normal beyond it | Provenance: a normal can never be high confidence |
-| Hotel | Amadeus offers reduced to an index (mock until keys exist) | Basket size; the index is relative, never bookable |
+| Hotel | A median over prices this app collects itself (synthetic index in the mock) | Property count, coverage and scope, and the age of the samples |
 | Flight | Amadeus cached fares (mock until keys exist), percentile within route history | History depth; quote age beyond 24h |
 | Crowding | Nager.Date holidays + a curated peak-period table + a weekend term | It is a proxy, and never claims otherwise |
 | FX | ECB daily reference rates, 12-month range measured from real observations | Pair volatility; static fallback for TWD/VND |
@@ -217,12 +273,19 @@ were a signal.
 
 ### What the live data changed about the model
 
-Nothing. The five scorers and every constant in `PARAMS` are untouched, which was the
-point of building the model against mock data that reproduced the real sources'
-limitations first. What changed is the *inputs*: `basis` now genuinely varies
+Nothing in the five scorers' arithmetic: every constant in `PARAMS` is untouched,
+which was the point of building the model against mock data that reproduced the real
+sources' limitations first. What changed is the *inputs*: `basis` now genuinely varies
 (forecast vs climate normal), fares genuinely carry an age, and the FX source is
-genuinely either ECB or the static table. Every one of those was already a branch the
-model handled and the UI disclosed.
+genuinely either ECB or the static table.
+
+The one conceptual change came from the hotel side, and it was forced by the source
+research rather than chosen: the reference price is a **level** (a median) rather than
+a relative index, so `HotelQuote` gained `propertyUniverse`, `censusScope`,
+`collectedAt` and `stale`, and the mock stopped claiming the collected basis. A level
+can be compared with the ¥500 anchor directly, which is what the brief always asked
+for — but it also has to disclose how much of a city it saw, which an index normalised
+against a city's own baseline never had to.
 
 ## What is still undecided
 
@@ -234,3 +297,6 @@ model handled and the UI disclosed.
 - **No price prediction.** The model is purely descriptive: it says what prices
   are relative to history, never whether waiting would help. A trend or forecast
   term is the highest-value addition once real history exists.
+- **Hotel breadth.** The median is only as wide as its sources. Until a city-wide
+  inventory feed is wired in, a collected median is chain-scoped, and the model says
+  so rather than presenting one chain's business hotels as a city's price level.

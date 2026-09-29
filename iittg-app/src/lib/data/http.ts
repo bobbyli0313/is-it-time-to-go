@@ -56,14 +56,26 @@ export interface HttpJsonOptions {
 }
 
 export class HttpError extends Error {
+  /**
+   * Declared rather than written as parameter properties: the collector CLI
+   * imports this module and runs it through Node's strip-only TypeScript support,
+   * which rejects that syntax. See `scripts/ts-loader.mjs`.
+   */
+  readonly status?: number;
+  readonly detail?: string;
+  readonly attempts?: number;
+
   constructor(
     message: string,
-    public readonly status?: number,
-    public readonly detail?: string,
-    public readonly attempts?: number,
+    status?: number,
+    detail?: string,
+    attempts?: number,
   ) {
     super(message);
     this.name = "HttpError";
+    this.status = status;
+    this.detail = detail;
+    this.attempts = attempts;
   }
 }
 

@@ -20,6 +20,7 @@ import {
 } from "@/lib/scoring";
 import type {
   City,
+  DimensionScore,
   FxSnapshot,
   Holiday,
   HotelQuote,
@@ -67,9 +68,15 @@ function existsInEveryLocale(key: string): boolean {
   });
 }
 
-/** Every key any scorer can emit, gathered by exercising every branch. */
-function collectKeys(): string[] {
-  const keys: string[] = [];
+/**
+ * Every dimension any scorer can produce, gathered by exercising every branch.
+ *
+ * Both the driver keys and the *fact keys* are asserted against the dictionary, so
+ * the walker returns the finished dimensions rather than the keys it happens to be
+ * interested in.
+ */
+function collectDimensions(): DimensionScore[] {
+  const dimensions: DimensionScore[] = [];
 
   const weatherSamples: WeatherSample[] = [
     // Ideal forecast.
@@ -83,18 +90,29 @@ function collectKeys(): string[] {
     { date: "2026-12-20", basis: "climate-normal", tempC: 4, humidityPct: 40, tempSpreadC: 6, humiditySpreadPct: 18 },
   ];
   for (const sample of weatherSamples) {
-    keys.push(...scoreWeather(sample, TRIP, NOW).drivers);
+    dimensions.push(scoreWeather(sample, TRIP, NOW));
   }
 
   const hotelQuotes: HotelQuote[] = [
-    { perNightLocal: 300, baselineLocal: 500, confidence: 0.8, basis: "hotel-price-index", sampleSize: 20 },
-    { perNightLocal: 700, baselineLocal: 500, confidence: 0.8, basis: "hotel-price-index", sampleSize: 20 },
-    { perNightLocal: 1000, baselineLocal: 500, confidence: 0.8, basis: "hotel-price-index", sampleSize: 20 },
-    { perNightLocal: 2600, baselineLocal: 500, confidence: 0.8, basis: "hotel-price-index", sampleSize: 3 },
+    { perNightLocal: 300, baselineLocal: 500, confidence: 0.8, basis: "chain-direct-median", sampleSize: 20 },
+    { perNightLocal: 700, baselineLocal: 500, confidence: 0.8, basis: "chain-direct-median", sampleSize: 20 },
+    { perNightLocal: 1000, baselineLocal: 500, confidence: 0.8, basis: "chain-direct-median", sampleSize: 20 },
+    { perNightLocal: 2600, baselineLocal: 500, confidence: 0.8, basis: "chain-direct-median", sampleSize: 3 },
     { perNightLocal: 800, baselineLocal: 500, confidence: 0.4, basis: "mock-flat", sampleSize: 3 },
+    // A collected median with full disclosure, and a stale, single-chain one.
+    {
+      perNightLocal: 12_000,
+      baselineLocal: 11_000,
+      confidence: 0.6,
+      basis: "chain-direct-median",
+      sampleSize: 34,
+      propertyUniverse: 51,
+      collectedAt: "2026-09-28T00:00:00Z",
+      stale: true,
+    },
   ];
   for (const quote of hotelQuotes) {
-    keys.push(...scoreHotel(quote).drivers);
+    dimensions.push(scoreHotel(quote));
   }
 
   const baseFlight = {
@@ -136,7 +154,7 @@ function collectKeys(): string[] {
     { kind: "unavailable" as const, reason: "no-quote" as const },
   ];
   for (const input of flightInputs) {
-    keys.push(...scoreFlight(input).drivers);
+    dimensions.push(scoreFlight(input));
   }
 
   const holidaySets: Holiday[][] = [
@@ -151,7 +169,7 @@ function collectKeys(): string[] {
     })),
   ];
   for (const holidays of holidaySets) {
-    keys.push(...scoreCrowd(holidays, TRIP).drivers);
+    dimensions.push(scoreCrowd(holidays, TRIP));
   }
 
   const fxSnapshots: Array<FxSnapshot | null> = [
@@ -163,9 +181,37 @@ function collectKeys(): string[] {
     { from: "CNY", to: "HKD", rate: 1.1, yearLow: 1.095, yearHigh: 1.105, asOf: "2026-09-22T00:00:00Z" },
   ];
   for (const fx of fxSnapshots) {
-    keys.push(...scoreFx(fx).drivers);
+    dimensions.push(scoreFx(fx));
   }
 
+  return dimensions;
+}
+
+/** Every driver key the scorers can emit. */
+function collectKeys(): string[] {
+  return collectDimensions().flatMap((dimension) => dimension.drivers);
+}
+
+/**
+ * Every fact *label* key the scorers can emit.
+ *
+ * `DimensionCard` renders each fact as `t("fact." + key)`, so a fact whose name is
+ * absent from the dictionary shows up in the UI as a raw identifier like
+ * `fact.perNightLocal`. Nothing in the type system connects the two, which is
+ * exactly why this test exists: it caught seven such labels when it was added.
+ */
+function collectFactKeys(): string[] {
+  const keys: string[] = [];
+  for (const dimension of collectDimensions()) {
+    for (const key of Object.keys(dimension.facts)) {
+      // `disclaimer` is special-cased by the card: its *value* is an i18n key.
+      keys.push(key === "disclaimer" ? String(dimension.facts[key]) : `fact.${key}`);
+    }
+    // Enumerated values carry their own keys.
+    if (typeof dimension.facts.basis === "string") {
+      keys.push(`${dimension.key}.basis.${dimension.facts.basis}`);
+    }
+  }
   return keys;
 }
 
@@ -173,6 +219,13 @@ describe("i18n coverage", () => {
   it("has a translation in every locale for every driver key the scorers emit", () => {
     const keys = [...new Set(collectKeys())];
     expect(keys.length).toBeGreaterThan(25);
+    const missing = keys.filter((key) => !existsInEveryLocale(key));
+    expect(missing).toEqual([]);
+  });
+
+  it("has a translation in every locale for every fact label the scorers emit", () => {
+    const keys = [...new Set(collectFactKeys())];
+    expect(keys.length).toBeGreaterThan(20);
     const missing = keys.filter((key) => !existsInEveryLocale(key));
     expect(missing).toEqual([]);
   });

@@ -125,15 +125,15 @@ export async function POST(request: Request): Promise<NextResponse<ScoreResponse
     }
 
     /**
-     * Two distinct hotel problems, and they need different messages: no curated
-     * basket at all for this city, versus a basket that exists but had too few
-     * samples near the requested date.
+     * Two distinct hotel problems, and they need different messages: a collection
+     * run that has never covered this city, versus one that covered it but not near
+     * the requested date.
      */
     if (context.hotel.sampleSize === 0) {
       dataNotes.push(
-        provenance.hotel === "self-collected-index"
+        provenance.hotel === "self-collected"
           ? "warning.hotelSamplesMissing"
-          : "warning.hotelBasketEmpty",
+          : "warning.hotelIsMockNoCity",
       );
     }
     if (provenance.fx === "static-reference") {

@@ -204,7 +204,12 @@ export async function fetchMockHotelIndex(
     perNightLocal: Math.round(baselineLocal * index),
     baselineLocal: Math.round(baselineLocal),
     confidence: 0.72,
-    basis: "hotel-price-index",
+    /**
+     * Named for what it is. The mock used to claim the collected basis, which made
+     * synthetic and real data indistinguishable in the UI — the one thing the
+     * prototype's provenance rules exist to prevent.
+     */
+    basis: "mock-flat",
     sampleSize: MOCK_SETTINGS.hotelSampleSize,
     components: {
       holidayLift: round3(holidayLift),
@@ -445,7 +450,7 @@ export function createMockProvider(): DataProvider {
       return fetchMockWeather(destination, date, now);
     },
 
-    fetchHotelIndex(destination, departDate, holidays) {
+    fetchHotelPrice(destination, departDate, holidays) {
       return fetchMockHotelIndex(destination, departDate, holidays);
     },
 

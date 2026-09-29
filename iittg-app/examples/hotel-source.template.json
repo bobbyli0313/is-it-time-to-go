@@ -1,0 +1,36 @@
+{
+  "$comment": [
+    "TEMPLATE — not a working configuration. Copy it, fill in the real URL and field",
+    "paths from the API documentation of a source you are entitled to call, then run",
+    "the collector with: --source examples/hotel-source.template.json",
+    "",
+    "This shape fits a REST/JSON rate endpoint. Hotelbeds is built in and needs none",
+    "of this; use it for a second source you are entitled to call — another partner",
+    "API, a licensed feed, or an export from an account you hold.",
+    "",
+    "Placeholders available in urlTemplate/bodyTemplate: {propertyId}, {propertyCode},",
+    "{cityId}, {date}, {adults}, {rooms}. ${ENV_VAR} is read from the environment, so",
+    "a key never has to be stored in this file."
+  ],
+  "id": "my-rate-source",
+  "label": "Replace with the source's name",
+  "extraction": "inferred",
+  "request": {
+    "urlTemplate": "https://api.example.com/rates?hotel={propertyCode}&checkIn={date}&checkOut={date}&adults={adults}&rooms={rooms}",
+    "method": "GET",
+    "headers": {
+      "Accept": "application/json",
+      "Api-Key": "${MY_RATE_SOURCE_KEY}"
+    },
+    "session": false
+  },
+  "response": {
+    "ratesPath": "data.rates",
+    "pricePath": "amount",
+    "currencyPath": "currency",
+    "propertyPath": "hotelCode",
+    "datePath": "checkIn",
+    "taxIncludedPath": "taxesIncluded"
+  },
+  "notes": "Fill in notes an operator would need: contract terms, rate basis, occupancy."
+}
