@@ -82,6 +82,12 @@ const en = {
   "warning.holidayCoverageSpanningYears": "This trip spans a year boundary, and holiday calendars are published per year — coverage may be incomplete.",
   "warning.hotelIsMockNoCity": "No hotel properties have been collected for this city yet, so hotel pricing was excluded.",
   "warning.hotelSamplesMissing": "No hotel prices were collected near these dates, so hotel pricing was excluded. Run the collector for this city to cover it.",
+  "warning.hotelJustCollected":
+    "No prices had been collected for this destination, so this request collected them. The hotel figure comes from that collection.",
+  "warning.hotelCollectionBudget":
+    "Prices for this destination could not be collected because today's collection budget is spent. They will be collected automatically on a later request.",
+  "warning.hotelCollectionFailed":
+    "Collecting prices for this destination failed, so the hotel dimension is excluded. The reason is in the server log.",
   "warning.hotelDataIsStale": "The collected hotel prices are several months old, so the reference price may have moved.",
   "warning.holidaySourceIncomplete": "The public holiday calendar for this period could not be fully retrieved, so the crowding estimate is based on weekends only.",
   "warning.fxFromStaticTable": "This currency pair is outside the ECB's published basket, so the exchange rate comes from a static reference table rather than a live feed.",
@@ -323,6 +329,9 @@ const zh: Record<MessageKey, string> = {
   "warning.holidayCoverageSpanningYears": "该行程跨越年份，而假期日历按年发布，覆盖可能不完整。",
   "warning.hotelIsMockNoCity": "该城市尚未采集任何酒店样本，酒店价格维度已排除。",
   "warning.hotelSamplesMissing": "这些日期附近没有采集到酒店价格，酒店价格维度已排除。运行该城市的采集任务即可覆盖。",
+  "warning.hotelJustCollected": "该目的地此前没有酒店价格，本次请求已即时采集，酒店分数来自这次采集结果。",
+  "warning.hotelCollectionBudget": "该目的地的酒店价格暂时无法采集：今日采集额度已用完，之后的请求会自动补采。",
+  "warning.hotelCollectionFailed": "该目的地酒店价格采集失败，酒店维度已排除，具体原因见服务端日志。",
   "warning.hotelDataIsStale": "已采集的酒店价格距今已有数月，参考价格可能已经变化。",
   "warning.holidaySourceIncomplete": "该时段的公共假期日历未能完整获取，拥挤度仅基于周末估算。",
   "warning.fxFromStaticTable": "该货币对不在欧洲央行公布范围内，汇率来自静态参考表而非实时数据。",

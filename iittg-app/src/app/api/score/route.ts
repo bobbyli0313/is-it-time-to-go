@@ -144,6 +144,25 @@ export async function POST(request: Request): Promise<NextResponse<ScoreResponse
           : "warning.hotelIsMockNoCity",
       );
     }
+
+    /**
+     * What the on-demand attempt did, when it made one.
+     *
+     * A city with no prices has three very different explanations — nobody has collected
+     * it yet, today's request budget is spent, or the source refused — and only the last
+     * is an incident. Saying which turns "the app has no data" into something the person
+     * reading it can act on.
+     */
+    const collection = context.hotel.collection;
+    if (collection) {
+      if (collection.status === "collected") {
+        dataNotes.push("warning.hotelJustCollected");
+      } else if (collection.status === "skipped") {
+        dataNotes.push("warning.hotelCollectionBudget");
+      } else if (collection.status === "failed") {
+        dataNotes.push("warning.hotelCollectionFailed");
+      }
+    }
     if (provenance.fx === "static-reference") {
       dataNotes.push("warning.fxFromStaticTable");
     }

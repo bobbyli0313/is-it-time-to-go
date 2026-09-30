@@ -13,13 +13,17 @@
  *     state plainly where each number came from — a partially-live deployment must
  *     not look fully live, and a fallback must not look like a live quote.
  *
- * ## Why hotel pricing has no external provider
+ * ## Where hotel prices come from
  *
  * A hotel chain's own site cannot answer "the median cost of a night in this city" —
  * its portfolio is not a city. Prices come from an inventory aggregator (Hotelbeds),
- * collected offline into a dataset by `./collect/` and read through a file-backed
- * store here. Until a collection run has covered a city, the mock index stands in and
- * the UI says so.
+ * written into a dataset and read through a file-backed store here.
+ *
+ * That dataset used to be filled only by an offline job. It is now filled on demand as
+ * well: with credentials configured, a request for a city that has no fresh prices
+ * collects them itself, within a daily request budget (`./collect/on-demand.ts`). The
+ * offline CLI still exists for bulk work and backfill, and both write through the same
+ * merge so neither can erase the other's cities.
  */
 
 import type { ScoreContext, TripInput } from "../scoring/types";
@@ -28,6 +32,8 @@ import {
   getFlightCredentials,
   getHotelDatasetPath,
   getHotelSource,
+  getHotelbedsCredentials,
+  getOnDemandCollection,
 } from "./config";
 import type { PricingCredentials } from "./config";
 import { createMockProvider } from "./mock-provider";
@@ -35,6 +41,10 @@ import { createLiveProvider } from "./live";
 import { fetchIgnavFlightQuote } from "./live/flights";
 import { fetchSelfCollectedHotelPrice } from "./hotel-price";
 import { createFileStore } from "./hotel-dataset-file";
+import { createHotelbedsAdapter } from "./collect/adapters/hotelbeds";
+import { collectCityOnDemand } from "./collect/on-demand";
+import type { HotelDataset } from "./hotel-dataset";
+import type { City } from "../scoring/types";
 import type { DataProvider, DataProvenance } from "./types";
 
 export interface ResolvedProviders {
@@ -83,13 +93,37 @@ function createIgnavProvider(credentials: PricingCredentials): DataProvider {
 /**
  * The collected hotel reference price, read from a JSON dataset.
  *
- * Only the reading side lives here. Collecting is an offline job
- * (`scripts/crawl-hotel-prices.ts`): it must not run on a request path, and keeping
- * it out of this module is what makes that structurally true rather than merely
- * intended.
+ * This provider owns the read side and the decision to collect: when a city has no
+ * fresh prices and credentials exist, `collectCityOnDemand` fills them in before the
+ * quote is computed. The collection itself lives in `./collect/`, so the rules that
+ * make it safe — budget, freshness, failure isolation — sit in one place rather than
+ * being re-derived here.
  */
 function createSelfCollectedHotelProvider(datasetPath: string): DataProvider {
   const store = createFileStore(datasetPath);
+
+  /**
+   * The on-demand collector, or `undefined` when it is off or unconfigured.
+   *
+   * Built lazily and only when credentials exist: without a key there is nothing to
+   * call, and constructing the adapter anyway would put a guaranteed-failing source on
+   * every request path.
+   */
+  const onDemand = getOnDemandCollection();
+  const credentials = getHotelbedsCredentials();
+  const collector =
+    onDemand.enabled && credentials
+      ? (city: City, date: string, dataset: HotelDataset, now: Date) =>
+          collectCityOnDemand(city, date, dataset, {
+            datasetPath,
+            adapter: createHotelbedsAdapter(credentials),
+            dailyQuota: onDemand.dailyQuota,
+            freshHours: onDemand.freshHours,
+            now,
+            log: (line) => console.log(`[iittg] ${line}`),
+          })
+      : undefined;
+
   return {
     name: "hotelbeds-collected-median",
     fetchWeather() {
@@ -111,6 +145,7 @@ function createSelfCollectedHotelProvider(datasetPath: string): DataProvider {
         holidays,
         store,
         now,
+        collector,
       );
     },
   };

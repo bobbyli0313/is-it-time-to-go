@@ -101,6 +101,33 @@ export function getHotelSource(): HotelSource {
 }
 
 /**
+ * Whether a score request may collect the destination's prices itself.
+ *
+ * Off by default in the sense that it needs credentials: with no Hotelbeds key there is
+ * nothing to call and the flag is moot. Enabled by default when they exist, because a
+ * city nobody has collected is exactly the city the first user is searching.
+ */
+export function getOnDemandCollection(): {
+  enabled: boolean;
+  /** Requests allowed per calendar day, across all cities. */
+  dailyQuota: number;
+  /** Re-collect a city only when its newest sample is older than this. */
+  freshHours: number;
+} {
+  const parsed = Number.parseInt(process.env.IITTG_HOTEL_DAILY_QUOTA ?? "", 10);
+  const fresh = Number.parseInt(process.env.IITTG_HOTEL_FRESH_HOURS ?? "", 10);
+  return {
+    enabled: process.env.IITTG_HOTEL_ON_DEMAND !== "off",
+    /**
+     * The evaluation tier allows 50 requests/day and answers 403 beyond that. Stopping
+     * one short of the limit leaves room for a manual CLI run on the same day.
+     */
+    dailyQuota: Number.isFinite(parsed) && parsed > 0 ? parsed : 49,
+    freshHours: Number.isFinite(fresh) && fresh > 0 ? fresh : 24,
+  };
+}
+
+/**
  * The collected dataset the read side serves.
  *
  * A path rather than credentials: the collector writes a JSON file (see

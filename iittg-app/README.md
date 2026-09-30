@@ -21,12 +21,17 @@ pricing needs an Ignav key and hotel prices need a collection run — copy
 `.env.example` to `.env.local` for the first, and run the collector for the second:
 
 ```bash
-npm run crawl:hotels -- --cities tokyo,osaka --dates 2026-10-20   # writes data/hotel-prices.json
+npm run crawl:hotels -- --cities tokyo,osaka --dates 2026-10-20   # optional: bulk warm-up
 ```
 
-Until a city has been collected its hotel dimension reports as **unavailable** (excluded
-from the total rather than scored as cheap). `IITTG_HOTEL_SOURCE=mock` swaps in a
-synthetic index for demos, labelled as sample data throughout.
+That command is optional. With `IITTG_HOTELBEDS_API_KEY` set, a request for a city with
+no fresh prices collects them itself and says so in the response
+(`warning.hotelJustCollected`); the CLI is for bulk collection and backfill. Both write
+through the same merge, so neither can erase the other's cities.
+
+Until a city has prices its hotel dimension reports as **unavailable** (excluded from the
+total rather than scored as cheap). `IITTG_HOTEL_SOURCE=mock` swaps in a synthetic index
+for demos, labelled as sample data throughout.
 
 ```bash
 npm test             # 255 tests, offline (fixtures, no network)
@@ -94,9 +99,13 @@ This is a deliberate design position rather than an unfinished integration:
 - **Age is disclosed.** Samples older than 45 days mark the quote stale.
 - **A thin city is excluded, not guessed.** Below eight priced properties the
   dimension reports as unavailable, exactly as a missing fare does.
-- **Collection is an offline job, never a request path.** The product must not depend
-  on a live scrape to render a score. That separation is structural: the collector
-  lives in `src/lib/data/collect/`, not in the request-path module.
+- **Collection can run on the request path, within a budget.** A city with no fresh
+  prices is collected by the request that needs it — the first person to search a city
+  is the person who should cause it to be collected. It is bounded so that cannot get
+  out of hand: a per-day request counter that survives restarts, a freshness window
+  (a city collected today is not collected again), one request per city-night, and a
+  rule that nothing in the collection path can fail a score. See
+  `src/lib/data/collect/on-demand.ts`.
 
 ### Collecting hotel prices
 
@@ -129,10 +138,12 @@ session the operator supplies, and will never obtain one itself.
   shapes come from Ignav's published OpenAPI document, but no fare has been observed,
   so parsing is defensive (an unexpected shape yields "unavailable" rather than a
   plausible-looking wrong number) and its confidence is capped at 0.55.
-- **Hotel coverage depends on collection.** A city with no census or no prices near
-  the requested dates reports the dimension as unavailable, and the UI says which of
-  the two it is. Collection is deliberately offline: the product must not depend on a
-  live scrape to render a score.
+- **Hotel coverage depends on collection.** With a source configured, a city with no
+  fresh prices is collected on demand; without one it reports the dimension as
+  unavailable, and the UI distinguishes "never collected" from "out of today's budget"
+  from "the source refused". The daily budget (49 requests by default, against a
+  50/day evaluation limit) is shared by every city, so a busy day degrades to
+  "collect it tomorrow" rather than to an upstream 403.
 - **The collected median can only be as broad as its sources.** A chain's own site
   enumerates that chain, not the city, so today's data is chain-scoped until a
   city-wide inventory source (a partner API such as Hotelbeds, or a paid aggregator)

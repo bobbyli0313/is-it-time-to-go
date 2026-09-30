@@ -17,6 +17,7 @@
  *   --census <file.csv>   A city's *complete* property list; makes coverage real.
  *   --out <file>          Where to write the dataset. Default: data/hotel-prices.json
  *   --no-write            Report only; useful with --import to validate a file.
+ *   --replace             Start the dataset over instead of merging into it.
  *   --max-properties <n>  Cap properties priced per city, for a cheap first run.
  *   --max-requests <n>    Transport request budget. Default 400.
  *   --session <file>      JSON `{ "cookies": "...", "headers": {...} }` for sources
@@ -26,8 +27,8 @@
  * Requires Node 22.18+ (`node file.ts` strips types); no build step.
  */
 
-import { readFile, writeFile, mkdir } from "node:fs/promises";
-import { dirname, resolve } from "node:path";
+import { readFile } from "node:fs/promises";
+import { resolve } from "node:path";
 import { CITIES, findCity } from "../src/lib/data/cities";
 import { validateDataset } from "../src/lib/data/hotel-dataset";
 import { createFileStore } from "../src/lib/data/hotel-dataset-file";
@@ -41,6 +42,7 @@ import {
   ratesFromJson,
 } from "../src/lib/data/collect/import";
 import { quantile } from "../src/lib/data/hotel-dataset";
+import { mergeDataset, writeDatasetAtomic } from "../src/lib/data/collect/dataset-io";
 import { createHotelbedsAdapter } from "../src/lib/data/collect/adapters/hotelbeds";
 import { getHotelbedsCredentials } from "../src/lib/data/config";
 import type { HotelDisclosure } from "../src/lib/data/hotel-dataset";
@@ -70,6 +72,7 @@ interface Args {
   userAgent: string;
   disclosure?: HotelDisclosure;
   noHotelbeds: boolean;
+  replace: boolean;
 }
 
 function parseArgs(argv: string[]): Args {
@@ -84,6 +87,7 @@ function parseArgs(argv: string[]): Args {
     maxRequests: DEFAULT_MAX_REQUESTS,
     userAgent: USER_AGENT,
     noHotelbeds: false,
+    replace: false,
   };
 
   for (let i = 0; i < argv.length; i += 1) {
@@ -137,6 +141,9 @@ function parseArgs(argv: string[]): Args {
       }
       case "--no-hotelbeds":
         args.noHotelbeds = true;
+        break;
+      case "--replace":
+        args.replace = true;
         break;
       default:
         if (flag.startsWith("--")) {
@@ -400,7 +407,33 @@ async function main(): Promise<void> {
 
   /* ------------------------------------------------------------- output */
 
-  const validation = validateDataset(report.dataset);
+  const outPath = resolve(args.out);
+
+  /**
+   * Merge into whatever is already there.
+   *
+   * Collection is per city, so replacing the file wholesale deletes every city this run
+   * did not cover — an early run for one city wiped the rest of the dataset, and the
+   * only reason it was noticed is that the report said "0 cities". `--replace` opts back
+   * into starting over.
+   */
+  const existingStore = createFileStore(outPath);
+  const existing = args.replace ? null : await existingStore.load();
+  const merged = mergeDataset(existing, {
+    cities: report.dataset.cities,
+    samples: report.dataset.samples,
+    basis: report.dataset.basis,
+    disclosure: report.dataset.disclosure,
+    generatedAt: report.dataset.generatedAt,
+  });
+
+  if (existing && existing.cities.length > 0) {
+    console.log(
+      `\nmerging into the existing dataset: ${existing.cities.length} cities -> ${merged.cities.length}`,
+    );
+  }
+
+  const validation = validateDataset(merged);
   if (!validation.ok) {
     console.error(`\nInternal error: produced dataset is invalid:`);
     for (const error of validation.errors) console.error(`  - ${error}`);
@@ -413,12 +446,10 @@ async function main(): Promise<void> {
     return;
   }
 
-  const outPath = resolve(args.out);
-  await mkdir(dirname(outPath), { recursive: true });
-  await writeFile(outPath, `${JSON.stringify(report.dataset, null, 2)}\n`, "utf8");
+  await writeDatasetAtomic(outPath, merged);
   console.log(`\nwrote ${outPath}`);
   console.log(
-    `  ${report.dataset.cities.length} cities, ${report.dataset.samples.length} samples, version ${report.dataset.version}`,
+    `  ${merged.cities.length} cities, ${merged.samples.length} samples, version ${merged.version}`,
   );
 
   // Read it back through the same store the app uses, so a dataset that passes

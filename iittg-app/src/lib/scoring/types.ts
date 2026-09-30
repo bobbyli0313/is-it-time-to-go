@@ -63,6 +63,17 @@ export interface WeatherSample {
 /* ------------------------------------------------------------------ hotels */
 
 /**
+ * The outcome of an on-demand collection attempt. Mirrors `OnDemandOutcome` in the
+ * collector; declared here so the domain type does not depend on the data layer.
+ */
+export type OnDemandOutcome =
+  | { status: "collected"; properties: number }
+  | { status: "fresh" }
+  | { status: "failed"; reason: string }
+  | { status: "skipped"; reason: string }
+  | { status: "disabled" };
+
+/**
  * How the hotel number was produced.
  *
  * - `collected-median`: the median of nightly rates this app collected from its price
@@ -99,6 +110,16 @@ export interface HotelQuote {
   collectedAt?: string;
   /** True when that sample is old enough that the level may have moved. */
   stale?: boolean;
+  /**
+   * What happened when this request tried to collect the city, when on-demand
+   * collection is enabled. Absent means no attempt was made — the offline path.
+   *
+   * Carried on the quote so the response can say *why* a destination has no price:
+   * never collected, out of the day's budget, or the source refused. Those call for
+   * different actions from the operator and the user, and "unavailable" alone tells
+   * them apart badly.
+   */
+  collection?: OnDemandOutcome;
   /**
    * What may be shown: the amount, or only its distance from the ¥500 anchor.
    *

@@ -36,6 +36,7 @@ import type { City, Holiday, HotelQuote } from "../scoring/types";
 import { addDays, diffDays, todayIn } from "../scoring/dates";
 import { TTL, remember } from "./cache";
 import { PARAMS } from "../scoring/dimensions";
+import type { OnDemandOutcome } from "./collect/on-demand";
 import {
   median,
   quantile,
@@ -278,11 +279,31 @@ export const EMPTY_STORE: HotelDatasetStore = {
 };
 
 /**
+ * Collects this city-night on the request path, if the operator has enabled it.
+ *
+ * Injectable so the read side does not import the collector, the transport or Hotelbeds
+ * credentials: a store plus this hook is all it takes to test the fallback, and a
+ * deployment without the hook behaves exactly as it did before on-demand collection
+ * existed.
+ */
+export type OnDemandCollector = (
+  city: City,
+  date: string,
+  dataset: HotelDataset,
+  now: Date,
+) => Promise<{ dataset: HotelDataset; outcome: OnDemandOutcome }>;
+
+/**
  * Resolves the reference price for a city and date.
  *
  * Returns a zero-confidence quote when unavailable, which the scorer turns into
  * an excluded dimension — a missing hotel estimate must never be scored as a
  * cheap one.
+ *
+ * With `collect` supplied, a city that has no usable samples is collected first. That
+ * reverses the original design, where collection was strictly offline — see
+ * `collect/on-demand.ts` for why, and for what stops it from spending the day's quota
+ * or failing a score.
  */
 export async function fetchSelfCollectedHotelPrice(
   destination: City,
@@ -290,6 +311,7 @@ export async function fetchSelfCollectedHotelPrice(
   _holidays: Holiday[],
   store: HotelDatasetStore = EMPTY_STORE,
   now: Date = new Date(),
+  collect?: OnDemandCollector,
 ): Promise<HotelQuote> {
   /**
    * The dataset is loaded *before* the cache is consulted, because its identity is
@@ -300,12 +322,27 @@ export async function fetchSelfCollectedHotelPrice(
    * TTL expired — a fresh collection silently invisible for hours. The store caches
    * by mtime, so this costs a `stat` and nothing else.
    */
-  const dataset = await store.load();
+  let dataset = await store.load();
+
+  /**
+   * Collect before caching, and only when there is something to collect.
+   *
+   * `collect` decides for itself whether the city is fresh, whether the day's budget
+   * allows it, and what to do about failures — this call cannot throw, and its result
+   * carries a reason that is surfaced to the user rather than swallowed.
+   */
+  let collection: OnDemandOutcome | null = null;
+  if (collect) {
+    const result = await collect(destination, departDate, dataset, now);
+    dataset = result.dataset;
+    collection = result.outcome;
+  }
+
   const version = dataset.generatedAt ?? "unversioned";
   const disclosure = dataset.disclosure ?? "price";
   const key = `hotel-price:${destination.id}:${departDate}:${version}:${disclosure}`;
 
-  return remember(
+  const quote = await remember(
     key,
     async () => {
       const census = dataset.cities.find((c) => c.cityId === destination.id);
@@ -315,20 +352,30 @@ export async function fetchSelfCollectedHotelPrice(
         return unavailableQuote(0);
       }
 
-      const { quote } = computeCityReferencePrice(
+      const { quote: computed } = computeCityReferencePrice(
         census,
         dataset.samples,
         departDate,
         now,
         disclosure,
       );
-      return quote;
+      return computed;
     },
     // Long TTL: collected samples change daily at most, and the reference price
     // is deliberately a slow-moving level rather than a live quote. A new dataset
     // gets a new key, so a collection run takes effect immediately.
     { ttlMs: TTL.hotelIndex, staleOnError: true },
   );
+
+  /**
+   * The collection outcome travels with the quote so the response can say *why* a city
+   * has no price — never collected, out of budget, or the source refused — instead of
+   * leaving the user to guess. It is not part of the cached value: the cache holds the
+   * price, and this is a fact about the request that produced it.
+   */
+  return collection && collection.status !== "fresh"
+    ? { ...quote, collection }
+    : { ...quote, ...(collection ? { collection } : {}) };
 }
 
 /** Exposed for tests and for the CLI's report, which states the same rules. */
