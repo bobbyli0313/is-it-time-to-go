@@ -184,6 +184,111 @@ export const CLIMATE: Record<string, CityClimate> = {
       [31, 76], [30, 76], [28, 77], [25, 76], [21, 76], [18, 76],
     ]),
   },
+  /* -------------------------------------- major long-haul hubs (2026-09-30) */
+  london: {
+    ...TEMPERATE_SPREAD,
+    months: months([
+      [5, 82], [5, 78], [7, 72], [9, 68], [13, 68], [16, 66],
+      [18, 65], [18, 68], [15, 72], [12, 78], [8, 82], [5, 84],
+    ]),
+  },
+  paris: {
+    ...TEMPERATE_SPREAD,
+    months: months([
+      [5, 84], [6, 80], [9, 74], [12, 70], [16, 70], [19, 68],
+      [21, 66], [21, 68], [18, 73], [13, 79], [8, 84], [6, 85],
+    ]),
+  },
+  frankfurt: {
+    ...TEMPERATE_SPREAD,
+    months: months([
+      [2, 82], [3, 78], [7, 72], [11, 68], [15, 68], [18, 68],
+      [20, 67], [20, 70], [16, 75], [11, 80], [6, 83], [3, 84],
+    ]),
+  },
+  amsterdam: {
+    ...TEMPERATE_SPREAD,
+    months: months([
+      [4, 86], [4, 83], [7, 78], [10, 73], [14, 72], [17, 73],
+      [19, 74], [19, 76], [16, 80], [12, 83], [8, 86], [5, 87],
+    ]),
+  },
+  madrid: {
+    ...TEMPERATE_SPREAD,
+    months: months([
+      [6, 77], [8, 71], [11, 63], [13, 61], [18, 56], [23, 48],
+      [27, 40], [27, 42], [22, 52], [16, 65], [10, 73], [7, 78],
+    ]),
+  },
+  istanbul: {
+    ...TEMPERATE_SPREAD,
+    months: months([
+      [6, 78], [6, 76], [8, 73], [12, 70], [17, 70], [22, 66],
+      [25, 64], [25, 67], [21, 70], [17, 74], [12, 76], [8, 78],
+    ]),
+  },
+  /**
+   * The three North American hubs and Sydney are temperate; Dubai and Delhi are
+   * tropical in spread (their seasons move the mean, not the day-to-day range).
+   */
+  newyork: {
+    ...TEMPERATE_SPREAD,
+    months: months([
+      [0, 63], [1, 61], [6, 59], [12, 57], [17, 62], [22, 66],
+      [25, 65], [24, 67], [20, 69], [14, 68], [9, 66], [3, 65],
+    ]),
+  },
+  losangeles: {
+    ...TEMPERATE_SPREAD,
+    months: months([
+      [14, 63], [14, 65], [15, 66], [16, 64], [18, 67], [20, 69],
+      [22, 68], [23, 68], [22, 67], [20, 64], [17, 60], [14, 62],
+    ]),
+  },
+  sanfrancisco: {
+    tempSpreadC: 3.5,
+    humiditySpreadPct: 11,
+    months: months([
+      [11, 80], [12, 78], [13, 76], [13, 73], [14, 74], [15, 75],
+      [16, 76], [17, 76], [17, 74], [16, 72], [13, 76], [11, 79],
+    ]),
+  },
+  rome: {
+    ...TEMPERATE_SPREAD,
+    months: months([
+      [8, 76], [9, 73], [11, 70], [14, 70], [18, 68], [22, 63],
+      [25, 60], [25, 62], [22, 66], [17, 72], [12, 76], [9, 78],
+    ]),
+  },
+  toronto: {
+    ...TEMPERATE_SPREAD,
+    months: months([
+      [-5, 76], [-4, 74], [1, 70], [7, 65], [14, 66], [19, 68],
+      [22, 67], [21, 70], [17, 73], [11, 75], [5, 78], [-2, 78],
+    ]),
+  },
+  dubai: {
+    ...TROPICAL_SPREAD,
+    months: months([
+      [19, 65], [20, 64], [23, 60], [27, 53], [31, 47], [33, 50],
+      [35, 55], [35, 58], [33, 58], [29, 58], [25, 60], [21, 64],
+    ]),
+  },
+  delhi: {
+    ...TROPICAL_SPREAD,
+    months: months([
+      [14, 68], [18, 60], [24, 48], [30, 35], [34, 33], [34, 50],
+      [31, 70], [30, 75], [29, 70], [25, 60], [20, 58], [15, 64],
+    ]),
+  },
+  sydney: {
+    tempSpreadC: 3.5,
+    humiditySpreadPct: 11,
+    months: months([
+      [23, 68], [23, 70], [21, 70], [18, 68], [15, 67], [13, 67],
+      [12, 65], [14, 63], [16, 62], [18, 63], [20, 65], [22, 66],
+    ]),
+  },
 };
 
 /* --------------------------------------------------------------------- fx */
@@ -223,6 +328,12 @@ export const FX_VS_CNY: Record<string, FxPairReference> = {
   VND: { cnyToQuote: 3560, yearLow: 3320, yearHigh: 3705 },
   PHP: { cnyToQuote: 8.05, yearLow: 7.18, yearHigh: 8.32 },
   TWD: { cnyToQuote: 4.42, yearLow: 4.12, yearHigh: 4.58 },
+  /**
+   * AED is outside the ECB basket and pegged to the USD at 3.6725, so its range
+   * against CNY is whatever the CNY/USD rate does — narrow, which the FX dimension
+   * reads as "managed" and scores neutrally rather than as a signal.
+   */
+  AED: { cnyToQuote: 0.517, yearLow: 0.5, yearHigh: 0.531 },
 };
 
 /**

@@ -16,7 +16,7 @@
  */
 
 import { NextResponse } from "next/server";
-import { findCity } from "@/lib/data/cities";
+import { resolveCityCode } from "@/lib/data/cities";
 import { hasRoute } from "@/lib/data/routes";
 import { buildScoreContext } from "@/lib/data";
 import { scoreTrip } from "@/lib/scoring";
@@ -40,8 +40,8 @@ function isScoreRequest(value: unknown): value is ScoreRequest {
   if (typeof value !== "object" || value === null) return false;
   const body = value as Record<string, unknown>;
   return (
-    typeof body.originCityId === "string" &&
-    typeof body.destinationCityId === "string" &&
+    typeof body.originCode === "string" &&
+    typeof body.destinationCode === "string" &&
     typeof body.departDate === "string" &&
     typeof body.returnDate === "string" &&
     (body.travellers === undefined || typeof body.travellers === "number")
@@ -60,10 +60,18 @@ export async function POST(request: Request): Promise<NextResponse<ScoreResponse
     return fail("error.invalidRequest");
   }
 
-  const origin = findCity(body.originCityId);
-  const destination = findCity(body.destinationCityId);
+  /**
+   * Resolve what the user typed. An unknown code is its own answer — "that city isn't
+   * supported yet" — and is deliberately distinct from a malformed request or a
+   * date-window problem, because the fix is different in each case.
+   */
+  const origin = resolveCityCode(body.originCode);
+  const destination = resolveCityCode(body.destinationCode);
 
-  if (!origin || !destination || origin.id === destination.id) {
+  if (!origin || !destination) {
+    return fail("form.cityUnsupported");
+  }
+  if (origin.id === destination.id) {
     return fail("form.routeUnavailable");
   }
   if (!hasRoute(origin.id, destination.id)) {

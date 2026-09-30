@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { CITIES } from "@/lib/data/cities";
+import { CITIES, SUPPORTED_CODES } from "@/lib/data/cities";
 import { ROUTES, destinationsFrom } from "@/lib/data/routes";
 import { createTranslator, type Locale } from "@/lib/i18n";
 import { addDays, diffDays, todayForTrip } from "@/lib/scoring/dates";
@@ -17,18 +17,17 @@ import type { InitialSearch } from "@/app/page";
 
 /** The spec's own example route, used as the default selection. */
 const DEFAULT_ORIGIN = "shanghai";
-const DEFAULT_DESTINATION = "tokyo";
+const DEFAULT_DESTINATION_CODE = "HND";
 const DEFAULT_LEAD_DAYS = 3;
 const DEFAULT_TRIP_DAYS = 5;
 
 function defaultForm(now: Date): FormState {
-  const origin =
-    CITIES.find((c) => c.id === DEFAULT_ORIGIN) ?? CITIES[0];
+  const origin = CITIES.find((c) => c.id === DEFAULT_ORIGIN) ?? CITIES[0];
   const today = todayForTrip(origin.timezone, origin.timezone, now);
   const depart = addDays(today, DEFAULT_LEAD_DAYS);
   return {
-    originCityId: origin.id,
-    destinationCityId: DEFAULT_DESTINATION,
+    originCode: origin.iataCity,
+    destinationCode: DEFAULT_DESTINATION_CODE,
     departDate: depart,
     returnDate: addDays(depart, DEFAULT_TRIP_DAYS - 1),
     travellers: 1,
@@ -38,8 +37,8 @@ function defaultForm(now: Date): FormState {
 function formFromSearch(initial: InitialSearch, fallback: FormState): FormState {
   if (!initial.from || !initial.to) return fallback;
   return {
-    originCityId: initial.from,
-    destinationCityId: initial.to,
+    originCode: initial.from,
+    destinationCode: initial.to,
     departDate: initial.depart || fallback.departDate,
     returnDate: initial.returnDate || fallback.returnDate,
     travellers: fallback.travellers,
@@ -78,8 +77,8 @@ export function ScoreApp({
       try {
         const scored = await requestScore(
           {
-            originCityId: candidate.originCityId,
-            destinationCityId: candidate.destinationCityId,
+            originCode: candidate.originCode,
+            destinationCode: candidate.destinationCode,
             departDate: candidate.departDate,
             returnDate: candidate.returnDate,
             travellers: candidate.travellers,
@@ -121,9 +120,9 @@ export function ScoreApp({
     (nextLocale: Locale, nextForm: FormState | null) => {
       const params = new URLSearchParams();
       params.set("lang", nextLocale);
-      if (nextForm?.originCityId && nextForm.destinationCityId) {
-        params.set("from", nextForm.originCityId);
-        params.set("to", nextForm.destinationCityId);
+      if (nextForm?.originCode && nextForm.destinationCode) {
+        params.set("from", nextForm.originCode);
+        params.set("to", nextForm.destinationCode);
         if (nextForm.departDate) params.set("depart", nextForm.departDate);
         if (nextForm.returnDate) params.set("return", nextForm.returnDate);
       }
@@ -254,11 +253,10 @@ export function ScoreApp({
               <div>
                 <dt className="text-slate-500">{t("form.origin")}</dt>
                 <dd className="mt-1 text-slate-300">
-                  {
-                    CITIES.filter((c) => destinationsFrom(c.id).length > 0)
-                      .length
-                  }{" "}
-                  cities
+                  {t("form.citiesSupported", {
+                    cities: CITIES.length,
+                    codes: SUPPORTED_CODES.length,
+                  })}
                 </dd>
               </div>
               <div>
@@ -280,7 +278,7 @@ export function ScoreApp({
           <p className="mt-1 text-xs text-slate-600">
             {result
               ? `${result.trip.airportPair[0]} → ${result.trip.airportPair[1]}`
-              : CITIES.map((c) => cityName(c, locale)).slice(0, 3).join(" · ")}
+              : SUPPORTED_CODES.slice(0, 6).join(" · ")}
           </p>
         </footer>
       </div>

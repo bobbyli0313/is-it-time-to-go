@@ -359,8 +359,20 @@ describe("live weather (Open-Meteo)", () => {
       daily: { time: string[]; temperature_2m_max: number[]; temperature_2m_min: number[] };
     };
 
+    /**
+     * `now` is derived from the fixture rather than read from the clock.
+     *
+     * A recorded forecast starts on the day it was captured, so passing the wall clock
+     * made this test expire at the next midnight: the sample date slid into the past,
+     * the provider correctly asked the archive for a normal instead, and the stub threw
+     * on an unexpected call. The test now pins the same day the fixture does.
+     */
     const firstDate = forecast.daily.time[0];
-    const sample = await fetchLiveWeather(tokyo, firstDate, new Date());
+    const sample = await fetchLiveWeather(
+      tokyo,
+      firstDate,
+      new Date(`${firstDate}T00:00:00Z`),
+    );
 
     expect(sample.basis).toBe("forecast");
     expect(sample.date).toBe(firstDate);

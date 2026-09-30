@@ -14,7 +14,13 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { callScoreRoute, d, scoreTripViaRoute } from "@/test/fixtures";
+import {
+  callScoreRoute,
+  city,
+  d,
+  scoreTripViaRoute,
+  UNSUPPORTED_CODE,
+} from "@/test/fixtures";
 import { ROUTES } from "@/lib/data/routes";
 
 describe("scoring route", () => {
@@ -126,28 +132,56 @@ describe("scoring route", () => {
 describe("scoring route validation", () => {
   it("rejects a same-city request", async () => {
     const { body } = await callScoreRoute({
-      originCityId: "tokyo",
-      destinationCityId: "tokyo",
+      originCode: "HND",
+      destinationCode: "NRT",
       departDate: d(3),
       returnDate: d(6),
     });
     expect(body.ok).toBe(false);
   });
 
-  it("rejects a city pair with no route data", async () => {
+  /**
+   * A pair the curated set does not list is still a legitimate question — routes are
+   * derived from coordinates — so it must score rather than fail. The old behaviour
+   * answered `routeUnavailable`, which only made sense while the form offered a
+   * dropdown built from the curated list.
+   */
+  it("scores a pair outside the curated route set", async () => {
     const { body } = await callScoreRoute({
-      originCityId: "sapporo",
-      destinationCityId: "bali",
+      originCode: "CTS",
+      destinationCode: "DPS",
       departDate: d(3),
       returnDate: d(8),
     });
+    expect(body.ok).toBe(true);
+  });
+
+  it("rejects a code the app does not support, and says which problem it is", async () => {
+    const { body, status } = await callScoreRoute({
+      originCode: UNSUPPORTED_CODE,
+      destinationCode: "HND",
+      departDate: d(3),
+      returnDate: d(8),
+    });
+    expect(status).toBe(400);
     expect(body.ok).toBe(false);
+    if (!body.ok) expect(body.error).toBe("form.cityUnsupported");
+  });
+
+  it("accepts a lower-case code, because that is what people type", async () => {
+    const { body } = await callScoreRoute({
+      originCode: "pvg",
+      destinationCode: "hnd",
+      departDate: d(3),
+      returnDate: d(8),
+    });
+    expect(body.ok).toBe(true);
   });
 
   it("rejects an unknown city id", async () => {
     const { body } = await callScoreRoute({
-      originCityId: "atlantis",
-      destinationCityId: "tokyo",
+      originCode: UNSUPPORTED_CODE,
+      destinationCode: "HND",
       departDate: d(3),
       returnDate: d(6),
     });
@@ -158,8 +192,8 @@ describe("scoring route validation", () => {
     expect(
       (
         await callScoreRoute({
-          originCityId: "shanghai",
-          destinationCityId: "tokyo",
+          originCode: "PVG",
+          destinationCode: "HND",
           departDate: d(-5),
           returnDate: d(-1),
         })
@@ -169,8 +203,8 @@ describe("scoring route validation", () => {
     expect(
       (
         await callScoreRoute({
-          originCityId: "shanghai",
-          destinationCityId: "tokyo",
+          originCode: "PVG",
+          destinationCode: "HND",
           departDate: d(40),
           returnDate: d(45),
         })
@@ -180,16 +214,16 @@ describe("scoring route validation", () => {
 
   it("accepts the exact edges of the departure window", async () => {
     const earliest = await callScoreRoute({
-      originCityId: "shanghai",
-      destinationCityId: "tokyo",
+      originCode: "PVG",
+      destinationCode: "HND",
       departDate: d(0),
       returnDate: d(3),
     });
     expect(earliest.body.ok).toBe(true);
 
     const latest = await callScoreRoute({
-      originCityId: "shanghai",
-      destinationCityId: "tokyo",
+      originCode: "PVG",
+      destinationCode: "HND",
       departDate: d(30),
       returnDate: d(30),
     });
@@ -200,8 +234,8 @@ describe("scoring route validation", () => {
     expect(
       (
         await callScoreRoute({
-          originCityId: "shanghai",
-          destinationCityId: "tokyo",
+          originCode: "PVG",
+          destinationCode: "HND",
           departDate: d(6),
           returnDate: d(3),
         })
@@ -211,8 +245,8 @@ describe("scoring route validation", () => {
     expect(
       (
         await callScoreRoute({
-          originCityId: "shanghai",
-          destinationCityId: "tokyo",
+          originCode: "PVG",
+          destinationCode: "HND",
           departDate: d(3),
           returnDate: d(40),
         })
@@ -223,8 +257,8 @@ describe("scoring route validation", () => {
   it("rejects malformed dates rather than throwing", async () => {
     for (const bad of ["2026-02-30", "not-a-date", "", "2026-13-01"]) {
       const { status, body } = await callScoreRoute({
-        originCityId: "shanghai",
-        destinationCityId: "tokyo",
+        originCode: "PVG",
+        destinationCode: "HND",
         departDate: bad,
         returnDate: d(6),
       });
@@ -246,8 +280,8 @@ describe("scoring route robustness", () => {
 
     for (const route of ROUTES) {
       const { body } = await callScoreRoute({
-        originCityId: route.originCityId,
-        destinationCityId: route.destinationCityId,
+        originCode: city(route.originCityId).iataCity,
+        destinationCode: city(route.destinationCityId).iataCity,
         departDate: d(7),
         returnDate: d(11),
       });
@@ -285,8 +319,8 @@ describe("scoring route robustness", () => {
    */
   it("is deterministic in its scores for the same request", async () => {
     const payload = {
-      originCityId: "beijing",
-      destinationCityId: "bangkok",
+      originCode: "PEK",
+      destinationCode: "BKK",
       departDate: d(12),
       returnDate: d(18),
     };

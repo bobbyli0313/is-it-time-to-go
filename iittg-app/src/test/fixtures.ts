@@ -63,15 +63,30 @@ export function trip(
   };
 }
 
-/** Flattens a trip into the request body shape the route accepts. */
+/**
+ * Flattens a trip into the request body shape the route accepts.
+ *
+ * Callers name cities by id because that is what they assert against; the wire
+ * contract carries what the *user* typed — an IATA code — so the ids are resolved
+ * here. That keeps the tests exercising the same code path a browser does, rather
+ * than a shortcut the app does not have.
+ */
 export function requestFor(
   originCityId: string,
   destinationCityId: string,
   departDate: string,
   returnDate: string,
 ) {
-  return { originCityId, destinationCityId, departDate, returnDate };
+  return {
+    originCode: city(originCityId).iataCity,
+    destinationCode: city(destinationCityId).iataCity,
+    departDate,
+    returnDate,
+  };
 }
+
+/** The same body, but with a code the app does not support. */
+export const UNSUPPORTED_CODE = "ZZZ";
 
 /**
  * Calls the scoring route handler directly.

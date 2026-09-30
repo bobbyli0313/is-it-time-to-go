@@ -38,6 +38,20 @@ npm run build        # production build
 > If `npm install` fails with `EPERM` on `~/.npm/_cacache`, point npm at a local
 > cache: `npm_config_cache=./.npm-cache npm install`.
 
+## Entering a trip
+
+Origin and destination are **IATA codes**, airport or city: `PVG` and `SHA` both mean
+Shanghai, `HND`, `NRT` and `TYO` all mean Tokyo. Either case works, the resolved city
+appears under the field as you type, and the field's suggestion list offers every code
+the app knows.
+
+Routes are derived from city coordinates rather than a curated pair list, so any two
+supported cities can be scored — a long-haul pair the demand model never enumerated
+gets a great-circle distance and a default demand factor instead of an error. A code
+the app does not know is rejected with **"that city isn't supported yet"** (暂不支持该城市);
+it is never resolved to a nearby city, because that is how someone ends up reading a
+score for a trip they did not ask about.
+
 ## Data sources
 
 | Dimension | Source | Key? | Status |
@@ -138,7 +152,11 @@ session the operator supplies, and will never obtain one itself.
 
 - English and Chinese, with the language in the URL so a scored trip is shareable in
   the recipient's language.
-- 21 cities across China, Japan, Korea and South-East Asia; 60 route pairs.
+- **35 cities / 57 codes**, entered by IATA code: the launch scope (China, Japan,
+  Korea, South-East Asia) plus the major long-haul hubs — London, Paris, Frankfurt,
+  Amsterdam, Madrid, Rome, Istanbul, New York, Los Angeles, San Francisco, Toronto,
+  Dubai, Delhi, Sydney. A code the app does not know is answered with "that city isn't
+  supported yet" rather than a nearest match.
 - Departure dates from today to today + 30, trips of 1–30 days.
 - A score with per-dimension breakdown, confidence badges, a "what is costing you
   points" attribution list, a data-source panel, and an expandable view of the raw

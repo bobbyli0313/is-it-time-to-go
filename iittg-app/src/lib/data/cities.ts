@@ -2,8 +2,14 @@
  * City and airport reference data.
  *
  * In production this is generated from the OurAirports / GeoNames dumps (see
- * scripts/). For the prototype it is hand-curated for the confirmed scope:
- * China, Japan, Korea and Southeast Asia.
+ * scripts/). For the prototype it is hand-curated: the launch scope (China, Japan,
+ * Korea, South-East Asia) plus the world's major long-haul hubs, because the traveller
+ * typing an airport code into the form is as likely to mean LHR as PVG.
+ *
+ * Coverage is deliberately a curated list rather than every airport on earth: a city
+ * only earns a place here when its timezone, currency, coordinates and climate are all
+ * known, which is what every scoring path depends on. Anything else is rejected with
+ * "that city isn't supported yet" rather than scored from a guess.
  *
  * Every city carries its own IANA timezone and currency because both are needed
  * on every scoring path — dates must be resolved per city, not per browser.
@@ -243,7 +249,195 @@ export const CITIES: City[] = [
     lon: 121.5654,
     name: { en: "Taipei", zh: "台北" },
   },
+
+  /* ---------------------------------------- major long-haul hubs (2026-09-30) */
+
+  {
+    id: "london",
+    iataCity: "LON",
+    airports: ["LHR", "LGW"],
+    country: "GB",
+    currency: "GBP",
+    timezone: "Europe/London",
+    lat: 51.5074,
+    lon: -0.1278,
+    name: { en: "London", zh: "伦敦" },
+  },
+  {
+    id: "paris",
+    iataCity: "PAR",
+    airports: ["CDG", "ORY"],
+    country: "FR",
+    currency: "EUR",
+    timezone: "Europe/Paris",
+    lat: 48.8566,
+    lon: 2.3522,
+    name: { en: "Paris", zh: "巴黎" },
+  },
+  {
+    id: "frankfurt",
+    iataCity: "FRA",
+    airports: ["FRA"],
+    country: "DE",
+    currency: "EUR",
+    timezone: "Europe/Berlin",
+    lat: 50.1109,
+    lon: 8.6821,
+    name: { en: "Frankfurt", zh: "法兰克福" },
+  },
+  {
+    id: "amsterdam",
+    iataCity: "AMS",
+    airports: ["AMS"],
+    country: "NL",
+    currency: "EUR",
+    timezone: "Europe/Amsterdam",
+    lat: 52.3676,
+    lon: 4.9041,
+    name: { en: "Amsterdam", zh: "阿姆斯特丹" },
+  },
+  {
+    id: "madrid",
+    iataCity: "MAD",
+    airports: ["MAD"],
+    country: "ES",
+    currency: "EUR",
+    timezone: "Europe/Madrid",
+    lat: 40.4168,
+    lon: -3.7038,
+    name: { en: "Madrid", zh: "马德里" },
+  },
+  {
+    id: "istanbul",
+    iataCity: "IST",
+    airports: ["IST"],
+    country: "TR",
+    currency: "TRY",
+    timezone: "Europe/Istanbul",
+    lat: 41.0082,
+    lon: 28.9784,
+    name: { en: "Istanbul", zh: "伊斯坦布尔" },
+  },
+  {
+    id: "newyork",
+    iataCity: "NYC",
+    airports: ["JFK", "EWR"],
+    country: "US",
+    currency: "USD",
+    timezone: "America/New_York",
+    lat: 40.7128,
+    lon: -74.006,
+    name: { en: "New York", zh: "纽约" },
+  },
+  {
+    id: "losangeles",
+    iataCity: "LAX",
+    airports: ["LAX"],
+    country: "US",
+    currency: "USD",
+    timezone: "America/Los_Angeles",
+    lat: 34.0522,
+    lon: -118.2437,
+    name: { en: "Los Angeles", zh: "洛杉矶" },
+  },
+  {
+    id: "sanfrancisco",
+    iataCity: "SFO",
+    airports: ["SFO"],
+    country: "US",
+    currency: "USD",
+    timezone: "America/Los_Angeles",
+    lat: 37.7749,
+    lon: -122.4194,
+    name: { en: "San Francisco", zh: "旧金山" },
+  },
+  {
+    id: "rome",
+    iataCity: "ROM",
+    airports: ["FCO"],
+    country: "IT",
+    currency: "EUR",
+    timezone: "Europe/Rome",
+    lat: 41.9028,
+    lon: 12.4964,
+    name: { en: "Rome", zh: "罗马" },
+  },
+  {
+    id: "toronto",
+    iataCity: "YTO",
+    airports: ["YYZ"],
+    country: "CA",
+    currency: "CAD",
+    timezone: "America/Toronto",
+    lat: 43.6532,
+    lon: -79.3832,
+    name: { en: "Toronto", zh: "多伦多" },
+  },
+  {
+    id: "dubai",
+    iataCity: "DXB",
+    airports: ["DXB"],
+    country: "AE",
+    currency: "AED",
+    timezone: "Asia/Dubai",
+    lat: 25.2048,
+    lon: 55.2708,
+    name: { en: "Dubai", zh: "迪拜" },
+  },
+  {
+    id: "delhi",
+    iataCity: "DEL",
+    airports: ["DEL"],
+    country: "IN",
+    currency: "INR",
+    timezone: "Asia/Kolkata",
+    lat: 28.6139,
+    lon: 77.209,
+    name: { en: "Delhi", zh: "德里" },
+  },
+  {
+    id: "sydney",
+    iataCity: "SYD",
+    airports: ["SYD"],
+    country: "AU",
+    currency: "AUD",
+    timezone: "Australia/Sydney",
+    lat: -33.8688,
+    lon: 151.2093,
+    name: { en: "Sydney", zh: "悉尼" },
+  },
 ];
+
+/**
+ * Airport code (or city code) to city.
+ *
+ * One index for both, because a traveller typing "TYO" and one typing "HND" mean the
+ * same trip, and the app should not care which they remembered. Ambiguity cannot
+ * arise: aerodrome codes are unique, and `iataCity` codes are distinct from every
+ * airport code in this table.
+ */
+export const CITY_BY_CODE: Map<string, City> = new Map(
+  CITIES.flatMap((city) => [
+    [city.iataCity.toUpperCase(), city] as const,
+    ...city.airports.map((code) => [code.toUpperCase(), city] as const),
+  ]),
+);
+
+/** Every code the form accepts, for the input's suggestion list. */
+export const SUPPORTED_CODES: string[] = [...CITY_BY_CODE.keys()].sort();
+
+/**
+ * Resolves what the user typed.
+ *
+ * Tolerant about how it was typed — surrounding space, lower case — and strict about
+ * what it is: an unknown code returns `undefined` so the caller can say "not supported
+ * yet" rather than substitute a nearest match, which is how someone ends up booking a
+ * trip to the wrong continent.
+ */
+export function resolveCityCode(input: string): City | undefined {
+  return CITY_BY_CODE.get(input.trim().toUpperCase());
+}
+
 
 export const CITY_BY_ID = new Map(CITIES.map((c) => [c.id, c]));
 

@@ -242,6 +242,35 @@ const ROUTE_INDEX = new Map(
 );
 
 /**
+ * Routes derived on demand, so any two supported cities can be scored.
+ *
+ * `ROUTE_PAIRS` used to be a gate: a pair that was not listed had no route, and the
+ * API answered `form.routeUnavailable`. That was fine while the form offered a
+ * dropdown built from the listed pairs, and wrong the moment the user can type an
+ * airport code — someone entering PVG and LHR has asked a perfectly ordinary question
+ * and should get a score, not an error about the app's internal curation.
+ *
+ * Distance was already derived from coordinates; the demand factor already had a
+ * deterministic fallback for unlisted pairs. So the "missing" route was only ever a
+ * missing entry in an index, and this builds it.
+ */
+const DERIVED = new Map<string, RouteSpec>();
+
+function deriveRoute(originCityId: string, destinationCityId: string): RouteSpec | undefined {
+  const key = `${originCityId}->${destinationCityId}`;
+  const cached = DERIVED.get(key);
+  if (cached) return cached;
+
+  if (!CITY_BY_ID.has(originCityId) || !CITY_BY_ID.has(destinationCityId)) {
+    return undefined;
+  }
+
+  const route = buildRoute(originCityId, destinationCityId);
+  DERIVED.set(key, route);
+  return route;
+}
+
+/**
  * Looks up a route in either direction.
  *
  * Pricing is symmetric in this prototype, so the reverse direction returns the same
@@ -257,7 +286,7 @@ export function findRoute(
   if (forward) return forward;
 
   const reverse = ROUTE_INDEX.get(`${destinationCityId}->${originCityId}`);
-  if (!reverse) return undefined;
+  if (!reverse) return deriveRoute(originCityId, destinationCityId);
 
   return {
     ...reverse,
@@ -268,13 +297,19 @@ export function findRoute(
   };
 }
 
+/** True when both cities are known and distinct — every such pair has a route. */
 export function hasRoute(a: string, b: string): boolean {
-  return findRoute(a, b) !== undefined;
+  return a !== b && findRoute(a, b) !== undefined;
 }
 
 /**
- * Every city reachable from `originId` within the launch scope, in both
- * directions, de-duplicated and excluding the origin itself.
+ * Every city the *curated* route set pairs with `originId`, in both directions,
+ * de-duplicated and excluding the origin itself.
+ *
+ * This is the demand-model curation, not the reachable set: since routes are derived
+ * on demand, any two supported cities can be scored. The form no longer needs either
+ * function — it takes codes — so they exist for tests and for describing the curated
+ * network.
  */
 export function destinationsFrom(originId: string): City[] {
   const ids = new Set<string>();

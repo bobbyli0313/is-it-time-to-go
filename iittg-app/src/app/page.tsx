@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { ScoreApp } from "@/components/ScoreApp";
-import { CITIES } from "@/lib/data/cities";
+import { resolveCityCode } from "@/lib/data/cities";
 import { MAX_TRIP_DAYS } from "@/lib/format";
 import { DEFAULT_LOCALE, isLocale, type Locale } from "@/lib/i18n";
 import { isValidIsoDate, todayForTrip } from "@/lib/scoring/dates";
@@ -24,11 +24,18 @@ function parseSearch(params: Record<string, string | string[] | undefined>): Ini
   const rawLang = one("lang");
   const locale = isLocale(rawLang) ? rawLang : DEFAULT_LOCALE;
 
-  const from = CITIES.find((c) => c.id === one("from"))?.id ?? "";
-  const to = CITIES.find((c) => c.id === one("to"))?.id ?? "";
+  /**
+   * Share links carry IATA codes, matching what the form takes. A link with a code the
+   * app does not know is dropped rather than passed through, so a stale or mistyped
+   * URL lands on the empty form instead of a rejection message.
+   */
+  const fromCity = resolveCityCode(one("from"));
+  const toCity = resolveCityCode(one("to"));
+  const from = fromCity?.iataCity ?? "";
+  const to = toCity?.iataCity ?? "";
 
   // Departure is only meaningful once we know the origin's timezone.
-  const origin = CITIES.find((c) => c.id === from);
+  const origin = fromCity;
   const depart = one("depart");
   const returnDate = one("return");
 

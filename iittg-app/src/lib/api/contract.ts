@@ -9,9 +9,18 @@
 import type { ScoreResult } from "../scoring/types";
 import type { DataProvenance } from "../data/types";
 
+/**
+ * What the browser sends.
+ *
+ * IATA codes rather than internal city ids, because that is what the user typed and
+ * what the API should be able to answer for: `"PVG"`, `"HND"`, `"LHR"`. A code the app
+ * does not know is rejected with `form.cityUnsupported` — never resolved to a nearest
+ * match, which is how someone ends up looking at a trip to the wrong continent.
+ */
 export type ScoreRequest = {
-  originCityId: string;
-  destinationCityId: string;
+  /** IATA airport code (PVG) or city code (SHA, TYO, LON). Case-insensitive. */
+  originCode: string;
+  destinationCode: string;
   /** Inclusive departure date, `YYYY-MM-DD`. */
   departDate: string;
   /** Inclusive return date, `YYYY-MM-DD`. */
