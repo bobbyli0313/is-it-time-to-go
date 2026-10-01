@@ -16,3 +16,7 @@ npm-debug.log*
 # Not committed: a wholesale rate feed is not ours to redistribute, and the file is
 # an artefact. Regenerate with: npm run crawl:hotels
 /data/
+# Vercel CLI state: project link and, when login is run with --global-config,
+# the auth token. Neither belongs in the repository.
+.vercel/
+.vercel-cli/
