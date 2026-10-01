@@ -17,6 +17,7 @@
  *     not "unexpected status 403".
  */
 
+import { isRetryable } from "../http";
 import type { CollectFailure, FetchFn, FetchRequest, FetchResponse } from "./types";
 
 /**
@@ -187,58 +188,90 @@ export function createPoliteFetch(options: PoliteFetchOptions = {}): PoliteFetch
       count += 1;
       lastRequestAt.set(host, Date.now());
 
-      const controller = new AbortController();
-      const timeout = setTimeout(
-        () => controller.abort(),
-        request.timeoutMs ?? timeoutMs,
-      );
       const started = Date.now();
 
-      try {
-        const response = await underlying(request.url, {
-          method: request.method ?? "GET",
-          headers: {
-            "User-Agent": userAgent,
-            Accept: "application/json, text/html;q=0.9, */*;q=0.8",
-            "Accept-Language": "en-US,en;q=0.9",
-            ...(request.headers ?? {}),
-          },
-          body: request.body,
-          redirect: "follow",
-          signal: controller.signal,
-        });
+      /**
+       * One retry, for socket-level failures only.
+       *
+       * Observed in practice: a POST to an availability API came back
+       * `TypeError: fetch failed` / `ECONNRESET` while the same host answered a GET
+       * moments earlier and curl answered the identical POST with 200 — a pooled
+       * connection that had gone away. Since collection now runs on the request path,
+       * letting one of those through means a visitor loses the dimension entirely, and
+       * a retry costs one request out of a budget that exists to be spent on exactly
+       * this.
+       *
+       * Deliberately narrow: network errors and 5xx only. A 4xx is a wrong request and
+       * repeating it wastes the quota while hiding the mistake. Every attempt is paced
+       * and counted, so a retry is not a way around the limiter.
+       */
+      let lastError: unknown;
+      for (let attempt = 1; attempt <= 2; attempt += 1) {
+        const controller = new AbortController();
+        const timeout = setTimeout(
+          () => controller.abort(),
+          request.timeoutMs ?? timeoutMs,
+        );
 
-        const body = await response.text();
-        const headers = Object.fromEntries(response.headers.entries());
-        const result: FetchResponse = {
-          status: response.status,
-          url: response.url || request.url,
-          contentType: headers["content-type"] ?? "",
-          headers,
-          body,
-        };
+        try {
+          const response = await underlying(request.url, {
+            method: request.method ?? "GET",
+            headers: {
+              "User-Agent": userAgent,
+              Accept: "application/json, text/html;q=0.9, */*;q=0.8",
+              "Accept-Language": "en-US,en;q=0.9",
+              ...(request.headers ?? {}),
+            },
+            body: request.body,
+            redirect: "follow",
+            signal: controller.signal,
+          });
 
-        entries.push({
-          url: request.url,
-          status: response.status,
-          ms: Date.now() - started,
-          at: new Date().toISOString(),
-        });
-        log(`  → ${response.status} ${request.url}`);
+          const body = await response.text();
+          const headers = Object.fromEntries(response.headers.entries());
+          const result: FetchResponse = {
+            status: response.status,
+            url: response.url || request.url,
+            contentType: headers["content-type"] ?? "",
+            headers,
+            body,
+          };
 
-        return result;
-      } catch (error) {
-        entries.push({
-          url: request.url,
-          status: null,
-          ms: Date.now() - started,
-          at: new Date().toISOString(),
-        });
-        log(`  → ERR ${request.url} (${String(error)})`);
-        throw error;
-      } finally {
-        clearTimeout(timeout);
+          entries.push({
+            url: request.url,
+            status: response.status,
+            ms: Date.now() - started,
+            at: new Date().toISOString(),
+          });
+          log(`  → ${response.status} ${request.url}`);
+
+          // A 5xx is worth one more attempt; the response is still returned either way,
+          // because the caller decides what a status means for its own source.
+          if (response.status < 500 || attempt === 2) return result;
+          lastError = new Error(`HTTP ${response.status}`);
+        } catch (error) {
+          lastError = error;
+          entries.push({
+            url: request.url,
+            status: null,
+            ms: Date.now() - started,
+            at: new Date().toISOString(),
+          });
+          log(`  → ERR ${request.url} (${String(error)})`);
+          if (!isRetryable(error) || attempt === 2) throw error;
+        } finally {
+          clearTimeout(timeout);
+        }
+
+        // Wait out the per-host interval before trying again, then count it.
+        const since = Date.now() - (lastRequestAt.get(host) ?? 0);
+        if (since < minIntervalMs) await sleep(minIntervalMs - since);
+        count += 1;
+        lastRequestAt.set(host, Date.now());
+        log(`  ↻ retrying ${request.url} after ${String(lastError)}`);
       }
+
+      throw lastError;
     });
 
     // Keep the chain alive even when this request rejects, so one failure does

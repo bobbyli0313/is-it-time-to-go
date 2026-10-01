@@ -98,8 +98,13 @@ function errorCode(error: unknown): string {
   return "";
 }
 
-/** True for failures worth retrying: timeouts, socket errors, 5xx. */
-function isRetryable(error: unknown): boolean {
+/**
+ * True for failures worth retrying: timeouts, socket errors, 5xx.
+ *
+ * Exported because the collector's transport needs the same judgement about what is
+ * worth repeating, and two copies of this list would drift.
+ */
+export function isRetryable(error: unknown): boolean {
   if (error instanceof HttpError) {
     // Only server-side statuses are worth another attempt.
     return error.status !== undefined && error.status >= 500;

@@ -688,3 +688,78 @@ describe("runCollection", () => {
     expect(report.cities[1].failures.join(" ")).toContain("no properties or prices");
   });
 });
+
+/**
+ * Retry policy for the collector's transport.
+ *
+ * Motivated by an observed failure rather than by theory: a POST to a live availability
+ * API returned `TypeError: fetch failed` (`ECONNRESET`) while the same host answered a GET
+ * moments earlier and curl answered the identical POST with 200 — a pooled connection
+ * that had gone away. Collection runs on the request path, so letting that through costs
+ * a visitor the whole dimension.
+ */
+describe("polite fetch retries", () => {
+  /** The shape `createPoliteFetch` expects from its underlying fetch. */
+  function reply(status: number, body = "{}"): Response {
+    return {
+      status,
+      url: "https://example.test/api",
+      headers: new Headers({ "content-type": "application/json" }),
+      text: async () => body,
+    } as unknown as Response;
+  }
+
+  function socketError(): TypeError {
+    const error = new TypeError("fetch failed");
+    (error as { cause?: unknown }).cause = { code: "ECONNRESET" };
+    return error;
+  }
+
+  function transport(underlying: () => Promise<Response>) {
+    return createPoliteFetch({
+      underlying: underlying as never,
+      minIntervalMs: 0,
+      timeoutMs: 1_000,
+    });
+  }
+
+  it("retries a dropped connection once, and returns the second answer", async () => {
+    let calls = 0;
+    const polite = transport(async () => {
+      calls += 1;
+      if (calls === 1) throw socketError();
+      return reply(200);
+    });
+
+    const response = await polite.fetchFn({ url: "https://example.test/api" });
+    expect(response.status).toBe(200);
+    expect(calls).toBe(2);
+  });
+
+  it("does not retry a status that says the request itself was wrong", async () => {
+    let calls = 0;
+    const polite = transport(async () => {
+      calls += 1;
+      return reply(403, "forbidden");
+    });
+
+    // A 403 is a refusal — a wrong key, an exhausted quota — and repeating it spends
+    // another request out of the same budget while hiding the reason.
+    const response = await polite.fetchFn({ url: "https://example.test/api" });
+    expect(response.status).toBe(403);
+    expect(calls).toBe(1);
+  });
+
+  it("gives up after the second attempt rather than looping", async () => {
+    let calls = 0;
+    const polite = transport(async () => {
+      calls += 1;
+      throw socketError();
+    });
+
+    await expect(polite.fetchFn({ url: "https://example.test/api" })).rejects.toThrow(
+      /fetch failed/,
+    );
+    expect(calls).toBe(2);
+  });
+});
