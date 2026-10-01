@@ -22,6 +22,25 @@ const css = readFileSync(
 );
 const flat = css.replace(/\s+/g, " ");
 
+describe("motion", () => {
+  it("defines the entrance animations the components reference", () => {
+    for (const name of [".animate-rise", ".animate-fade", ".bar-grow"]) {
+      expect(flat).toContain(name);
+    }
+  });
+
+  /**
+   * A page that animates regardless of the reader's system preference is an
+   * accessibility defect, not a style choice, so the guard is part of the contract.
+   */
+  it("switches them all off for readers who asked for reduced motion", () => {
+    expect(flat).toContain("@media (prefers-reduced-motion: reduce)");
+    expect(flat).toMatch(
+      /@media \(prefers-reduced-motion: reduce\) \{ \.animate-rise, \.animate-fade, \.bar-grow \{ animation: none; \}/,
+    );
+  });
+});
+
 describe("dimension grid CSS", () => {
   it("caps card width so the wrap point is driven by space, not content", () => {
     expect(flat).toContain(

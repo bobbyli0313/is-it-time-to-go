@@ -9,6 +9,8 @@
  */
 
 import { describe, expect, it } from "vitest";
+import { readdirSync, readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { MESSAGES, LOCALES, translate, type Locale } from "@/lib/i18n";
 import {
   scoreCrowd,
@@ -223,7 +225,54 @@ function collectFactKeys(): string[] {
   return keys;
 }
 
+/**
+ * Every i18n key the *components* name literally.
+ *
+ * The scorer walker above cannot see these, and that gap shipped a real bug: the
+ * results section called `t("result.detailsHeading")` for a key that was never added to
+ * either dictionary, so users were shown the raw string `result.detailsHeading` as a
+ * heading. The translator deliberately falls back to the key rather than throwing —
+ * which is right for a runtime, and exactly why a test has to look.
+ */
+function collectComponentKeys(): string[] {
+  const dir = fileURLToPath(new URL("../../components/", import.meta.url));
+  const keys: string[] = [];
+
+  for (const name of readdirSync(dir)) {
+    if (!name.endsWith(".tsx")) continue;
+    const source = readFileSync(`${dir}${name}`, "utf8");
+
+    /**
+     * Comments are stripped first: the components *describe* their i18n contract in
+     * prose (`The row label is t("fact." + key)`), and scanning that text would assert
+     * against a key that is deliberately not one.
+     */
+    const code = source
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/(^|[^:])\/\/[^\n]*/g, "$1");
+
+    // `t("a.b")`. A template literal (`t(`a.${x}`)`) is skipped: the interpolated part
+    // is data, not a key.
+    for (const match of code.matchAll(/\bt\(\s*"([a-zA-Z][\w.]*)"/g)) {
+      keys.push(match[1]);
+    }
+    // Keys reached through another i18n key's value, e.g. `t(value)` where value is an
+    // i18n key — those are asserted by the scorer walker instead.
+  }
+
+  return [...new Set(keys)];
+}
+
 describe("i18n coverage", () => {
+  it("has a translation for every key a component names literally", () => {
+    const missing = collectComponentKeys().filter((key) => !existsInEveryLocale(key));
+    expect(missing).toEqual([]);
+  });
+
+  it("checks a useful number of component keys, so the scan cannot silently find none", () => {
+    expect(collectComponentKeys().length).toBeGreaterThan(25);
+  });
+
   it("has a translation in every locale for every driver key the scorers emit", () => {
     const keys = [...new Set(collectKeys())];
     expect(keys.length).toBeGreaterThan(25);
@@ -271,17 +320,14 @@ describe("i18n coverage", () => {
     expect(missing).toEqual([]);
   });
 
-  it("covers every dimension and confidence label", () => {
+  it("covers every dimension label", () => {
+    // The confidence labels are gone with the confidence badges they rendered.
     const keys = [
       "dimension.weather",
       "dimension.hotel",
       "dimension.flight",
       "dimension.crowd",
       "dimension.fx",
-      "confidence.high",
-      "confidence.medium",
-      "confidence.low",
-      "confidence.notApplicable",
     ];
     expect(keys.filter((key) => !existsInEveryLocale(key))).toEqual([]);
   });

@@ -1,10 +1,6 @@
 "use client";
 
-import type {
-  Confidence,
-  DimensionKey,
-  DimensionScore,
-} from "@/lib/scoring/types";
+import type { DimensionKey, DimensionScore } from "@/lib/scoring/types";
 import type { Locale, Translator } from "@/lib/i18n";
 import {
   BAND_STYLES,
@@ -13,12 +9,6 @@ import {
   relativeAge,
   scoreBand,
 } from "@/lib/format";
-
-const CONFIDENCE_STYLE: Record<Confidence, string> = {
-  high: "bg-emerald-400/10 text-emerald-300 ring-emerald-400/25",
-  medium: "bg-amber-400/10 text-amber-300 ring-amber-400/25",
-  low: "bg-rose-400/10 text-rose-300 ring-rose-400/25",
-};
 
 /** Facts whose value is a count/percentage/amount needing locale formatting. */
 const NUMERIC_FACTS = new Set([
@@ -153,44 +143,41 @@ function formatFactValue(
 
 export function DimensionCard({
   dimension,
+  index = 0,
   locale,
   t,
 }: {
   dimension: DimensionScore;
+  /** Position in the grid, used only to stagger the entrance. */
+  index?: number;
   locale: Locale;
   t: Translator;
 }) {
   const notApplicable = !dimension.applicable || dimension.score === null;
   const band = notApplicable ? null : BAND_STYLES[scoreBand(dimension.score!)];
-  const confidenceStyle = notApplicable
-    ? "bg-white/5 text-slate-400 ring-white/10"
-    : CONFIDENCE_STYLE[dimension.confidence];
 
   // Order matters: show provenance before numbers.
   const factEntries = Object.entries(dimension.facts);
 
+  const score = dimension.score;
+
   return (
-    <article className="flex flex-col rounded-xl bg-white/[0.03] p-4 ring-1 ring-white/10">
+    <article
+      className="animate-rise flex flex-col rounded-xl bg-white/[0.03] p-4 ring-1 ring-white/10 transition duration-300 hover:-translate-y-0.5 hover:bg-white/[0.055] hover:ring-white/20"
+      // Staggered so the cards arrive in reading order rather than all at once.
+      style={{ animationDelay: `${Math.min(index, 6) * 60}ms` }}
+    >
       <header className="flex items-start justify-between gap-3">
-        <div>
-          <h3 className="text-sm font-semibold text-white">
-            {dimensionLabel(dimension.key, t)}
-          </h3>
-          <span
-            className={`mt-1.5 inline-block rounded-full px-2 py-0.5 text-[10px] font-medium ring-1 ${confidenceStyle}`}
-          >
-            {notApplicable
-              ? t("confidence.notApplicable")
-              : t(`confidence.${dimension.confidence}`)}
-          </span>
-        </div>
+        <h3 className="text-sm font-semibold text-white">
+          {dimensionLabel(dimension.key, t)}
+        </h3>
 
         <div className="text-right">
           {notApplicable ? (
             <span className="text-2xl font-bold text-slate-600">—</span>
           ) : (
             <span className={`text-3xl font-bold tabular-nums ${band!.text}`}>
-              {Math.round(dimension.score!)}
+              {Math.round(score!)}
             </span>
           )}
         </div>
@@ -199,8 +186,11 @@ export function DimensionCard({
       {!notApplicable ? (
         <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/5">
           <div
-            className={`h-full rounded-full ${band!.bar} transition-[width] duration-700`}
-            style={{ width: `${Math.max(0, Math.min(100, dimension.score!))}%` }}
+            className={`bar-grow h-full rounded-full ${band!.bar}`}
+            style={{
+              width: `${Math.max(0, Math.min(100, score!))}%`,
+              animationDelay: `${Math.min(index, 6) * 60 + 120}ms`,
+            }}
           />
         </div>
       ) : null}

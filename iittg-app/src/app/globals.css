@@ -79,3 +79,64 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     flex-basis: calc((100% - 2.5rem) / 3);
   }
 }
+
+/* ------------------------------------------------------------------ motion */
+
+/**
+ * Entrance animations.
+ *
+ * Kept in CSS rather than in a component so the reduced-motion guard below can switch
+ * all of them off in one place — a reader who has asked the operating system for less
+ * animation should not get a page that slides and counts at them anyway.
+ */
+@keyframes iittg-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes iittg-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes iittg-grow {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* `both` keeps the element hidden before the delay elapses, which is what makes the
+   staggered cards arrive in order instead of flashing at full opacity first. */
+.animate-rise {
+  animation: iittg-rise 0.45s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+.animate-fade {
+  animation: iittg-fade 0.5s ease-out both;
+}
+
+.bar-grow {
+  transform-origin: left center;
+  animation: iittg-grow 0.7s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-rise,
+  .animate-fade,
+  .bar-grow {
+    animation: none;
+  }
+}

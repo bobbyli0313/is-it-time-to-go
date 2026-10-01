@@ -169,9 +169,11 @@ session the operator supplies, and will never obtain one itself.
   Dubai, Delhi, Sydney. A code the app does not know is answered with "that city isn't
   supported yet" rather than a nearest match.
 - Departure dates from today to today + 30, trips of 1–30 days.
-- A score with per-dimension breakdown, confidence badges, a "what is costing you
-  points" attribution list, a data-source panel, and an expandable view of the raw
-  data behind every dimension.
+- A score with per-dimension breakdown, a "what is costing you points" attribution
+  list, a data-source panel, and an expandable view of the raw data behind every
+  dimension. Provenance is stated per dimension rather than as one blanket claim, and
+  at most one data caveat is surfaced at the top — the rest live on the card they
+  affect, where they cannot bury the one that matters.
 
 ## Architecture
 

@@ -225,21 +225,17 @@ export function ScoreApp({
               onReset={reset}
             />
 
-            <section>
-              <h2 className="mb-4 text-xs font-semibold tracking-wide text-slate-400 uppercase">
-                {t("result.detailsHeading")}
-              </h2>
-              <DimensionGrid count={shownDimensions.length}>
-                {shownDimensions.map((dimension) => (
-                  <DimensionCard
-                    key={dimension.key}
-                    dimension={dimension}
-                    locale={locale}
-                    t={t}
-                  />
-                ))}
-              </DimensionGrid>
-            </section>
+            <DimensionGrid count={shownDimensions.length}>
+              {shownDimensions.map((dimension, index) => (
+                <DimensionCard
+                  key={dimension.key}
+                  dimension={dimension}
+                  index={index}
+                  locale={locale}
+                  t={t}
+                />
+              ))}
+            </DimensionGrid>
           </>
         ) : (
           <section className="rounded-2xl bg-white/[0.02] p-5 ring-1 ring-white/5">
