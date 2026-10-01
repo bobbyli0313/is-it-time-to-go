@@ -93,6 +93,53 @@ export interface OnDemandResult {
 const inflight = new Map<string, Promise<OnDemandResult>>();
 
 /**
+ * In-process fallback for a dataset that cannot be written to disk.
+ *
+ * Vercel gives a function only `/tmp`, which is per-instance and disappears with the
+ * instance — so on a serverless deployment the dataset file does not exist and cannot be
+ * created. Without this layer that breaks two things quietly and expensively:
+ *
+ *  - **Freshness is forgotten**, so every request for the city collects again. At one
+ *    request per search, a busy hour spends the day's whole Hotelbeds quota.
+ *  - **The request counter is forgotten**, which is the guard that exists to stop
+ *    exactly that. It would fail open — the direction that costs money.
+ *
+ * Holding both in memory for the life of the process makes a warm instance behave like
+ * the single-machine case. The honest caveats, which the CLI and the README state: this
+ * is *per instance*, so N instances can each spend their own budget, and it is lost on a
+ * cold start. A durable store (Vercel KV, Redis, Postgres) is the fix; until then the
+ * daily quota should be set with the instance count in mind.
+ */
+const overlays = new Map<string, HotelDataset>();
+const quotas = new Map<string, QuotaState>();
+
+/** The newest dataset known for this path: disk, upgraded by anything collected since. */
+function withOverlay(dataset: HotelDataset, datasetPath: string): HotelDataset {
+  const overlay = overlays.get(datasetPath);
+  if (!overlay) return dataset;
+  // The overlay was merged from this dataset, so it is a superset; use it as-is.
+  return overlay;
+}
+
+/** Remember a collection for later requests in this process. */
+function rememberDataset(datasetPath: string, dataset: HotelDataset): void {
+  overlays.set(datasetPath, dataset);
+}
+
+/** The higher of the disk counter and the in-memory one, when both are for today. */
+function newestQuota(
+  fromDisk: QuotaState,
+  fromMemory: QuotaState | undefined,
+  now: Date,
+): QuotaState {
+  const today = dayKey(now);
+  if (fromMemory && fromMemory.day === today && fromMemory.used > fromDisk.used) {
+    return fromMemory;
+  }
+  return fromDisk;
+}
+
+/**
  * The transport and robots cache, shared for the life of the process.
  *
  * Keyed on the injected fetch so a test that stubs the network does not inherit a
@@ -221,6 +268,8 @@ export async function collectCityOnDemand(
     };
   }
 
+  dataset = withOverlay(dataset, options.datasetPath);
+
   if (isFresh(dataset, city.id, date, options.now, options.freshHours)) {
     return { outcome: { status: "fresh" }, dataset };
   }
@@ -234,7 +283,11 @@ export async function collectCityOnDemand(
 
     let quota: QuotaState;
     try {
-      quota = await readQuota(quotaPath, options.now);
+      quota = newestQuota(
+        await readQuota(quotaPath, options.now),
+        quotas.get(quotaPath),
+        options.now,
+      );
     } catch (error) {
       return {
         outcome: { status: "skipped", reason: String(error) },
@@ -332,10 +385,19 @@ export async function collectCityOnDemand(
         runtime.polite.requestsMade() - before,
         rates.length > 0 ? 1 : 0,
       );
+      const next: QuotaState = { day: quota.day, used: quota.used + spent };
+      /**
+       * Always record it in memory first. A deployment whose filesystem is read-only
+       * must still count what it spends — a counter that fails open is worse than no
+       * counter, because it keeps collecting while believing it has budget.
+       */
+      quotas.set(quotaPath, next);
       try {
-        await writeQuota(quotaPath, { day: quota.day, used: quota.used + spent });
+        await writeQuota(quotaPath, next);
       } catch (error) {
-        log(`on-demand collection: ${String(error)}`);
+        log(
+          `on-demand collection: ${String(error)} — counting in memory for this instance only`,
+        );
       }
     }
 
@@ -349,16 +411,25 @@ export async function collectCityOnDemand(
       baselineAsOf,
       baselineSource,
     });
+
+    /**
+     * Keep it in memory regardless of the disk: that is what makes the freshness window
+     * work on a deployment whose filesystem is read-only, instead of re-collecting the
+     * same city on every request.
+     */
+    rememberDataset(options.datasetPath, merged);
+
     try {
       await writeDatasetAtomic(options.datasetPath, merged);
     } catch (error) {
-      // The collection succeeded but could not be persisted. Reporting it as collected
-      // would be a lie the next request discovers; the rates are still returned in
-      // memory so this request benefits.
-      return {
-        outcome: { status: "failed", reason: `collected but not saved: ${String(error)}` },
-        dataset: merged,
-      };
+      /**
+       * A read-only filesystem is a deployment fact, not a failure of this collection:
+       * the prices were fetched and are being served, and this process will remember
+       * them. Logged rather than reported, because the user's score is correct.
+       */
+      log(
+        `on-demand collection: ${String(error)} — serving ${rates.length} prices from memory for this instance`,
+      );
     }
 
     const properties = merged.cities.find((c) => c.cityId === city.id)?.properties.length;
@@ -462,4 +533,15 @@ function describe(failure: { kind: string } & Record<string, unknown>): string {
 }
 
 /** Exposed for tests. */
-export const internals = { isFresh, coversWindow, newestSampleFor, reduceToPropertyMedians };
+export const internals = {
+  isFresh,
+  coversWindow,
+  newestSampleFor,
+  reduceToPropertyMedians,
+  withOverlay,
+  /** Test seam: the per-process overlay would otherwise leak between test cases. */
+  resetMemory(): void {
+    overlays.clear();
+    quotas.clear();
+  },
+};

@@ -32,6 +32,17 @@ export const runtime = "nodejs";
  */
 export const dynamic = "force-dynamic";
 
+/**
+ * How long this function may run.
+ *
+ * A scored trip is four to six upstream calls, and when the destination has no fresh
+ * hotel prices it also makes one Hotelbeds request — which on a cold cache is a few
+ * seconds on top. The platform default (10s on Hobby) is close enough to that total to
+ * time out under a slow upstream, so the ceiling is raised explicitly rather than
+ * discovered in production. The collector's own timeout is 8s, which fits inside it.
+ */
+export const maxDuration = 30;
+
 function fail(error: string, status = 400) {
   return NextResponse.json<ScoreResponse>({ ok: false, error }, { status });
 }

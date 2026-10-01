@@ -57,6 +57,45 @@ the app does not know is rejected with **"that city isn't supported yet"** (暂�
 it is never resolved to a nearby city, because that is how someone ends up reading a
 score for a trip they did not ask about.
 
+## Deploy
+
+One Next.js app, no database, no cron. Deployed from `iittg-app/` (set that as the
+project's **Root Directory**, or run the CLI from inside it):
+
+```bash
+cd iittg-app
+npx vercel deploy --prod
+```
+
+Three environment variables are worth setting in the dashboard. Without them the app
+still runs — weather, holidays, FX and crowding are live, and the flight and hotel
+dimensions report as unavailable rather than guessing:
+
+| Variable | What it enables |
+|---|---|
+| `IITTG_FLIGHT_API_KEY` + `IITTG_SOURCE_FLIGHT=live` | Flight pricing (Ignav) |
+| `IITTG_HOTELBEDS_API_KEY` + `IITTG_HOTELBEDS_SECRET` | Hotel prices, collected on demand |
+| `IITTG_CACHE_DISK=0` | Memory-only cache — **set this on Vercel** |
+
+### What a serverless host changes
+
+**The filesystem is read-only apart from `/tmp`, which is per-instance and ephemeral.**
+That matters because hotel prices are a *collected* dataset rather than an API call:
+
+- The dataset and the daily request counter cannot be written. Both therefore fall back
+  to process memory (`src/lib/data/collect/on-demand.ts`), so a warm instance behaves like
+  the single-machine case: a city it collected is not collected again, and its spending is
+  counted.
+- The consequence is that the budget is **per instance**: N instances can each spend the
+  daily allowance, and a cold start forgets everything. Set `IITTG_HOTEL_DAILY_QUOTA`
+  with that in mind, and put the dataset in a durable store (Vercel KV, Redis, Postgres)
+  before the traffic justifies a key upgrade.
+- `IITTG_CACHE_DISK=0` avoids the disk cache trying to write where it cannot.
+
+`maxDuration` is set to 30s on the scoring route: a request that has to collect hotel
+prices makes one extra upstream call, which is more than the platform default leaves room
+for.
+
 ## Data sources
 
 | Dimension | Source | Key? | Status |

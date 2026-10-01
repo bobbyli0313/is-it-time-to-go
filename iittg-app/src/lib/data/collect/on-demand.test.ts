@@ -14,11 +14,11 @@
  * The transport is stubbed throughout: no test here touches the network.
  */
 
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { collectCityOnDemand } from "@/lib/data/collect/on-demand";
+import { collectCityOnDemand, internals } from "@/lib/data/collect/on-demand";
 import { mergeDataset, writeDatasetAtomic } from "@/lib/data/collect/dataset-io";
 import { emptyDataset, validateDataset, type HotelDataset } from "@/lib/data/hotel-dataset";
 import { findCity } from "@/lib/data/cities";
@@ -150,6 +150,10 @@ function options(dir: string, calls: { count: number }, overrides: Record<string
 /* ---------------------------------------------------------------- tests */
 
 describe("collectCityOnDemand", () => {
+  // The in-process overlay exists so a read-only filesystem does not forget what it
+  // collected; between tests it has to be cleared or one case would answer for another.
+  beforeEach(() => internals.resetMemory());
+
   it("collects a city that has no prices, and saves them", async () => {
     const dir = await workspace();
     const calls = { count: 0 };
@@ -215,9 +219,14 @@ describe("collectCityOnDemand", () => {
     const quotaPath = join(dir, "quota.json");
     const opts = options(dir, calls, { quotaPath, dailyQuota: 2 });
 
+    /**
+     * Dates months apart, deliberately. One collection covers the ±3-day window around
+     * it, so asking for consecutive nights is a *cache hit* — correct behaviour, and it
+     * would make this test count one request and assert nothing about the budget.
+     */
     await collectCityOnDemand(TOKYO, "2026-10-20", emptyDataset(), opts);
-    await collectCityOnDemand(TOKYO, "2026-10-21", emptyDataset(), opts);
-    const third = await collectCityOnDemand(TOKYO, "2026-10-22", emptyDataset(), opts);
+    await collectCityOnDemand(TOKYO, "2026-11-20", emptyDataset(), opts);
+    const third = await collectCityOnDemand(TOKYO, "2026-12-20", emptyDataset(), opts);
 
     expect(calls.count).toBe(2);
     expect(third.outcome.status).toBe("skipped");
@@ -276,6 +285,65 @@ describe("collectCityOnDemand", () => {
     // Osaka's data survives a failed Tokyo collection: the dataset is the caller's.
     expect(result.dataset).toBe(existing);
     expect(result.dataset.cities.map((c) => c.cityId)).toEqual(["osaka"]);
+  });
+
+  /**
+   * The serverless case. Vercel gives a function only `/tmp`, which is per-instance and
+   * ephemeral, so the dataset and the quota counter cannot be written at all. Without
+   * the in-memory fallback the app would re-collect the same city on every request and
+   * the counter would fail open — the two ways this feature costs real money.
+   */
+  describe("on a filesystem it cannot write to", () => {
+    /** A writable-looking directory that rejects every write. */
+    async function readOnlyDir(): Promise<string> {
+      return join(await workspace(), "read-only");
+    }
+
+    it("serves the prices it collected, and remembers them for the next request", async () => {
+      const dir = await readOnlyDir();
+      const calls = { count: 0 };
+      const opts = {
+        ...options(dir, calls),
+        // No directory is ever created, so mkdir/writeFile fail exactly as they do on a
+        // read-only filesystem.
+        datasetPath: join(dir, "missing", "hotel-prices.json"),
+      };
+
+      const first = await collectCityOnDemand(TOKYO, "2026-10-20", emptyDataset(), opts);
+      expect(first.outcome.status).toBe("collected");
+      expect(first.dataset.cities[0].cityId).toBe("tokyo");
+      expect(calls.count).toBe(1);
+
+      // Second request, same process: the overlay answers, so no second request.
+      const second = await collectCityOnDemand(
+        TOKYO,
+        "2026-10-20",
+        emptyDataset(),
+        opts,
+      );
+      expect(second.outcome).toEqual({ status: "fresh" });
+      expect(calls.count).toBe(1);
+      expect(second.dataset.samples.length).toBe(first.dataset.samples.length);
+    });
+
+    it("still counts what it spends, so the budget cannot fail open", async () => {
+      const dir = await readOnlyDir();
+      const calls = { count: 0 };
+      const opts = {
+        ...options(dir, calls, { dailyQuota: 2 }),
+        datasetPath: join(dir, "missing", "hotel-prices.json"),
+        quotaPath: join(dir, "missing", "quota.json"),
+      };
+
+      // Months apart, for the same reason as the budget test above: neighbouring
+      // nights share a collection window.
+      await collectCityOnDemand(TOKYO, "2026-10-20", emptyDataset(), opts);
+      await collectCityOnDemand(TOKYO, "2026-11-20", emptyDataset(), opts);
+      const third = await collectCityOnDemand(TOKYO, "2026-12-20", emptyDataset(), opts);
+
+      expect(calls.count).toBe(2);
+      expect(third.outcome.status).toBe("skipped");
+    });
   });
 
   it("never throws when the source itself explodes", async () => {
