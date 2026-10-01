@@ -25,7 +25,7 @@ export function isLocale(value: string): value is Locale {
 const en = {
   "app.title": "Is It Time To Go?",
   "app.tagline":
-    "One score for whether now is a good time to take that trip — built from weather, prices, crowding and exchange rates.",
+    "One score for when is the good time for your trip, built from real time data.",
 
   "form.heading": "Plan a trip",
   "form.routeGroup": "Where",
@@ -40,7 +40,6 @@ const en = {
   "form.submit": "Score this trip",
   "form.scoring": "Scoring…",
   "form.codeHint": "IATA airport or city code — PVG, HND, LHR",
-  "form.citiesSupported": "{cities} cities, {codes} codes",
   "form.cityUnsupported": "That city isn't supported yet",
   "form.swap": "Swap origin and destination",
   "form.tripLength": "{days} days",
@@ -251,7 +250,7 @@ export type MessageKey = keyof typeof en;
 const zh: Record<MessageKey, string> = {
   "app.title": "该出发了吗？",
   "app.tagline":
-    "用天气、价格、拥挤度和汇率，为「现在适不适合去」给出一个分数。",
+    "用真实数据，为「现在适不适合去」给出一个分数。",
 
   "form.heading": "规划一次旅行",
   "form.routeGroup": "去哪里",
@@ -266,7 +265,6 @@ const zh: Record<MessageKey, string> = {
   "form.submit": "计算分数",
   "form.scoring": "计算中…",
   "form.codeHint": "机场或城市三字码 — 如 PVG、HND、LHR",
-  "form.citiesSupported": "{cities} 座城市 · {codes} 个代码",
   "form.cityUnsupported": "暂不支持该城市",
   "form.swap": "交换出发地与目的地",
   "form.tripLength": "{days} 天",

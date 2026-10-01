@@ -2,10 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { CITIES, SUPPORTED_CODES } from "@/lib/data/cities";
-import { ROUTES, destinationsFrom } from "@/lib/data/routes";
+import { CITIES } from "@/lib/data/cities";
 import { createTranslator, type Locale } from "@/lib/i18n";
-import { addDays, diffDays, todayForTrip } from "@/lib/scoring/dates";
+import { addDays, todayForTrip } from "@/lib/scoring/dates";
 import { cityName, dateRange } from "@/lib/format";
 import { requestScore, type ScoreResponse } from "@/lib/requestScore";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
@@ -177,11 +176,6 @@ export function ScoreApp({
     ? dateRange(result.trip.departDate, result.trip.returnDate, locale)
     : "";
 
-  const tripDays =
-    form.departDate && form.returnDate && form.returnDate >= form.departDate
-      ? diffDays(form.departDate, form.returnDate) + 1
-      : 0;
-
   return (
     <>
       <header className="mb-8 flex flex-wrap items-start justify-between gap-4">
@@ -237,45 +231,17 @@ export function ScoreApp({
               ))}
             </DimensionGrid>
           </>
-        ) : (
-          <section className="rounded-2xl bg-white/[0.02] p-5 ring-1 ring-white/5">
-            <dl className="grid gap-3 text-xs sm:grid-cols-3">
-              <div>
-                <dt className="text-slate-500">{t("form.heading")}</dt>
-                <dd className="mt-1 text-slate-300">
-                  {ROUTES.length} routes
-                </dd>
-              </div>
-              <div>
-                <dt className="text-slate-500">{t("form.origin")}</dt>
-                <dd className="mt-1 text-slate-300">
-                  {t("form.citiesSupported", {
-                    cities: CITIES.length,
-                    codes: SUPPORTED_CODES.length,
-                  })}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-slate-500">{t("form.returnDate")}</dt>
-                <dd className="mt-1 text-slate-300">
-                  {tripDays > 0
-                    ? t("form.tripLength", { days: tripDays })
-                    : `1–${maxTripDays} days`}
-                </dd>
-              </div>
-            </dl>
-          </section>
-        )}
+        ) : null}
 
         <footer className="border-t border-white/10 pt-5">
           <p className="text-xs leading-relaxed text-slate-500">
             {t("footer.disclaimer")}
           </p>
-          <p className="mt-1 text-xs text-slate-600">
-            {result
-              ? `${result.trip.airportPair[0]} → ${result.trip.airportPair[1]}`
-              : SUPPORTED_CODES.slice(0, 6).join(" · ")}
-          </p>
+          {result ? (
+            <p className="mt-1 text-xs text-slate-600">
+              {result.trip.airportPair[0]} → {result.trip.airportPair[1]}
+            </p>
+          ) : null}
         </footer>
       </div>
     </>
