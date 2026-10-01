@@ -26,6 +26,14 @@ coverage/
 PLANS.md
 FEASIBILITY.md
 
+# Vercel CLI state. The project link, and — because login here used
+# `--global-config` to keep it inside the workspace — the auth token itself. The same
+# rule is in iittg-app/.gitignore for when the CLI is run from that directory; this
+# entry exists because a root-level `git add -A` is what actually caught it, and GitHub
+# push protection is not a thing to rely on as the second line of defence.
+.vercel/
+.vercel-cli/
+
 # Editor and OS noise
 .DS_Store
 .idea/

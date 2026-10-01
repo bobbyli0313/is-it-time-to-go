@@ -171,6 +171,39 @@ describe("collectCityOnDemand", () => {
     expect(saved.cities[0].baselineLocal).toBeGreaterThan(10_000);
   });
 
+  /**
+   * A dataset created by an on-demand collection must carry the *source's* disclosure,
+   * not the schema default.
+   *
+   * This was a real bug, caught by running the serverless configuration: with no dataset
+   * on disk, the first collection built one, and without this it fell through to `price`
+   * — so a wholesale source that permits publishing only an index would have had its
+   * amounts published. The rules that withhold `perNight`, `baseline` and `index` all
+   * key off this one field.
+   */
+  it("records the source's disclosure, so an index-only source is not published as amounts", async () => {
+    const dir = await workspace();
+    const calls = { count: 0 };
+    const result = await collectCityOnDemand(
+      TOKYO,
+      "2026-10-20",
+      emptyDataset(),
+      options(dir, calls),
+    );
+
+    expect(result.dataset.disclosure).toBe("index");
+    expect(calls.count).toBe(1);
+
+    // And it cannot be loosened by a later collection from the same source.
+    const again = await collectCityOnDemand(
+      TOKYO,
+      "2026-11-20",
+      result.dataset,
+      options(dir, calls),
+    );
+    expect(again.dataset.disclosure).toBe("index");
+  });
+
   it("spends nothing when the city's prices are still fresh", async () => {
     const dir = await workspace();
     const calls = { count: 0 };

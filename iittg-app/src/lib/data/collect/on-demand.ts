@@ -41,7 +41,11 @@ import { dirname, join } from "node:path";
 import type { City, OnDemandOutcome } from "../../scoring/types";
 import { addDays } from "../../scoring/dates";
 import type { HotelDataset, HotelPriceSample, HotelProperty } from "../hotel-dataset";
-import { DEFAULT_BASIS, reduceToPropertyMedians } from "../hotel-dataset";
+import {
+  DEFAULT_BASIS,
+  reduceToPropertyMedians,
+  type HotelDisclosure,
+} from "../hotel-dataset";
 import type { CollectorAdapter, RawRate } from "./types";
 import { createPoliteFetch, USER_AGENT } from "./http";
 import { baselineForCurrency, type BaselineResult } from "./baseline";
@@ -410,6 +414,17 @@ export async function collectCityOnDemand(
       baselineLocal: baseline,
       baselineAsOf,
       baselineSource,
+      /**
+       * The disclosure the *source* asks for, which the CLI takes from the same place.
+       *
+       * Missing this was a real bug, found by running the serverless configuration: a
+       * dataset built purely by on-demand collection fell through to the schema's
+       * `price` default, so a source that permits publishing only an index would have
+       * had its amounts published — the exact disclosure the index mode exists to
+       * withhold. The merge takes the most restrictive of the two, so an existing
+       * `index` dataset is never loosened either.
+       */
+      disclosure: adapter.defaultDisclosure,
     });
 
     /**
@@ -456,6 +471,8 @@ export interface MergeContext {
   baselineLocal: number;
   baselineAsOf: string;
   baselineSource: string;
+  /** What the source permits publishing; the stricter value wins in the merge. */
+  disclosure?: HotelDisclosure;
 }
 
 /** Folds fresh rates into the dataset as a one-city collection. */
@@ -510,6 +527,7 @@ export function mergeRates(
     samples,
     generatedAt: context.now.toISOString(),
     basis: dataset.basis ?? { ...DEFAULT_BASIS },
+    ...(context.disclosure ? { disclosure: context.disclosure } : {}),
   });
 }
 

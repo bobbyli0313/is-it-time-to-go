@@ -20,3 +20,4 @@ npm-debug.log*
 # the auth token. Neither belongs in the repository.
 .vercel/
 .vercel-cli/
+.vercel
